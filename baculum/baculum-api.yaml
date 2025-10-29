@@ -1,0 +1,751 @@
+#---------------------------------------------------------------------
+# Archivo de configuracion baculum-api
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: baculum-api
+  namespace: bacula
+data:
+  baculum.users: |-
+    admin:YWG41BPzVAkN6
+
+  api.conf: |-
+    [api]
+    auth_type = "basic"
+    debug = "0"
+    lang = "en"
+
+    [db]
+    enabled = "1"
+    type = "pgsql"
+    name = "bacula"
+    login = "bacula"
+    password = "bacula"
+    ip_addr = "postgresql-node-rw.bacula.svc.cluster.local"
+    port = "5432"
+    path = ""
+
+    [bconsole]
+    enabled = "1"
+    bin_path = "/opt/bacula/bin/bconsole"
+    cfg_path = "/opt/bacula/etc/bconsole.conf"
+    use_sudo = "0"
+
+    [jsontools]
+    enabled = "1"
+    use_sudo = "0"
+    bconfig_dir = "/etc/baculum/"
+    bdirjson_path = "/opt/bacula/bin/bdirjson"
+    dir_cfg_path = "/opt/bacula/etc/bacula-dir.conf"
+    bsdjson_path = "/opt/bacula/bin/bsdjson"
+    sd_cfg_path = "/opt/bacula/etc/bacula-sd.conf"
+    bfdjson_path = "/opt/bacula/bin/bfdjson"
+    fd_cfg_path = "/opt/bacula/etc/bacula-fd.conf"
+    bbconsjson_path = "/opt/bacula/bin/bbconsjson"
+    bcons_cfg_path = "/opt/bacula/etc/bconsole.conf"
+
+---
+#---------------------------------------------------------------------
+# Archivo de configuracion baculum-fd
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-fd
+  namespace: bacula
+data: 
+  bacula-fd.conf: |-
+    #
+    # Default  Bacula File Daemon Configuration file
+    #
+    #  For Bacula release 9.4.4 (28 May 2019) -- redhat Enterprise release
+    #
+    # There is not much to change here except perhaps the
+    # File daemon Name to
+    #
+    #
+    # Copyright (C) 2000-2015 Kern Sibbald
+    # License: BSD 2-Clause; see file LICENSE-FOSS
+    #
+    #
+    # List Directors who are permitted to contact this File daemon
+    #
+    Director {
+      Name = bacula-dir
+      Password = "eso80TrxzhXkRgaQVI6ZYrSzAZ4E9KFNp0Y+T1HHVWBi"
+    }
+    #
+    #
+    # Restricted Director, used by tray-monitor to get the
+    #   status of the file daemon
+    #
+    Director {
+      Name = bacula-mon
+      Password = "nm6na6cCh3NymDV6JteWL0Fir71A5uhrdRjmnRKjnHn5"
+      Monitor = yes
+    }
+    #
+    #
+    # "Global" File daemon configuration specifications
+    #
+    FileDaemon {                          # this is me
+      Name = bacula-fd
+      FDport = 9102                  # where we listen for the director
+      WorkingDirectory = /opt/bacula/working
+      Pid Directory = /opt/bacula/working
+      Maximum Concurrent Jobs = 20
+      Plugin Directory = /opt/bacula/plugins
+    }
+    #
+    # Send all messages except skipped files back to Director
+    Messages {
+      Name = Standard
+      director = bacula-dir = all, !skipped, !restored
+    }
+
+
+---
+#---------------------------------------------------------------------
+# Archivo de configuracion baculum-sd
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-sd
+  namespace: bacula
+data: 
+  bacula-sd.conf: |-
+    #
+    # Default Bacula Storage Daemon Configuration file
+    #
+    #  For Bacula release 9.4.4 (28 May 2019) -- redhat Enterprise release
+    #
+    # You may need to change the name of your tape drive
+    #   on the "Archive Device" directive in the Device
+    #   resource.  If you change the Name and/or the
+    #   "Media Type" in the Device resource, please ensure
+    #   that dird.conf has corresponding changes.
+    #
+    #
+    # Copyright (C) 2000-2017 Kern Sibbald
+    # License: BSD 2-Clause; see file LICENSE-FOSS
+    #
+
+    Storage {                             # definition of myself
+      Name = bacula-sd
+      SDPort = 9103                  # Director's port
+      WorkingDirectory = "/opt/bacula/working"
+      Pid Directory = "/opt/bacula/working"
+      Plugin Directory = "/opt/bacula/plugins"
+      Maximum Concurrent Jobs = 20
+    }
+
+    #
+    # List Directors who are permitted to contact Storage daemon
+    #
+    Director {
+      Name = bacula-dir
+      Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
+    }
+
+    #
+    # Restricted Director, used by tray-monitor to get the
+    #   status of the storage daemon
+    #
+    Director {
+      Name = bacula-mon
+      Password = "5p+emSGBrRv7sdsOJjlXxOjIDIzvivTLzY8ywWCjz02x"
+      Monitor = yes
+    }
+
+    #
+    # Note, for a list of additional Device templates please
+    #  see the directory <bacula-source>/examples/devices
+    # Or follow the following link:
+    #  http://www.bacula.org/git/cgit.cgi/bacula/tree/bacula/examples/devices?h=Branch-7.4
+    #
+
+    #
+    # Devices supported by this Storage daemon
+    # To connect, the Director's bacula-dir.conf must have the
+    #  same Name and MediaType.
+    #
+
+    #
+    # Define a Virtual autochanger
+    #
+    Autochanger {
+      Name = FileChgr1
+      Device = FileChgr1-Dev1, FileChgr1-Dev2
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+
+    Device {
+      Name = FileChgr1-Dev1
+      Media Type = File1
+      Archive Device = /tmp
+      LabelMedia = yes;                   # lets Bacula label unlabeled media
+      Random Access = Yes;
+      AutomaticMount = yes;               # when device opened, read it
+      RemovableMedia = no;
+      AlwaysOpen = no;
+      Maximum Concurrent Jobs = 5
+    }
+
+    Device {
+      Name = FileChgr1-Dev2
+      Media Type = File1
+      Archive Device = /tmp
+      LabelMedia = yes;                   # lets Bacula label unlabeled media
+      Random Access = Yes;
+      AutomaticMount = yes;               # when device opened, read it
+      RemovableMedia = no;
+      AlwaysOpen = no;
+      Maximum Concurrent Jobs = 5
+    }
+
+    #
+    # Define a second Virtual autochanger
+    #
+    Autochanger {
+      Name = FileChgr2
+      Device = FileChgr2-Dev1, FileChgr2-Dev2
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+
+    Device {
+      Name = FileChgr2-Dev1
+      Media Type = File2
+      Archive Device = /tmp
+      LabelMedia = yes;                   # lets Bacula label unlabeled media
+      Random Access = Yes;
+      AutomaticMount = yes;               # when device opened, read it
+      RemovableMedia = no;
+      AlwaysOpen = no;
+      Maximum Concurrent Jobs = 5
+    }
+
+    Device {
+      Name = FileChgr2-Dev2
+      Media Type = File2
+      Archive Device = /tmp
+      LabelMedia = yes;                   # lets Bacula label unlabeled media
+      Random Access = Yes;
+      AutomaticMount = yes;               # when device opened, read it
+      RemovableMedia = no;
+      AlwaysOpen = no;
+      Maximum Concurrent Jobs = 5
+    }
+
+
+
+    #
+    # An autochanger device with two drives
+    #
+    #Autochanger {
+    #  Name = Autochanger
+    #  Device = Drive-1
+    #  Device = Drive-2
+    #  Changer Command = "/opt/bacula/scripts/mtx-changer %c %o %S %a %d"
+    #  Changer Device = /dev/sg0
+    #}
+
+    #Device {
+    #  Name = Drive-1                      #
+    #  Drive Index = 0
+    #  Media Type = DLT-8000
+    #  Archive Device = /dev/nst0
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  AutoChanger = yes
+    #  #
+    #  # New alert command in Bacula 9.0.0
+    #  #  Note: you must have the sg3_utils (rpms) or the
+    #  #        sg3-utils (deb) installed on your system.
+    #  #        and you must set the correct control device that
+    #  #        corresponds to the Archive Device
+    #  Control Device = /dev/sg?? # must be SCSI ctl for /dev/nst0
+    #  Alert Command = "/opt/bacula/scripts/tapealert %l"
+    #
+    #  #
+    #  # Enable the Alert command only if you have the mtx package loaded
+    #  # Note, apparently on some systems, tapeinfo resets the SCSI controller
+    #  #  thus if you turn this on, make sure it does not reset your SCSI
+    #  #  controller.  I have never had any problems, and smartctl does
+    #  #  not seem to cause such problems.
+    #  #
+    #  Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    #  If you have smartctl, enable this, it has more info than tapeinfo
+    #  Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #Device {
+    #  Name = Drive-2                      #
+    #  Drive Index = 1
+    #  Media Type = DLT-8000
+    #  Archive Device = /dev/nst1
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  AutoChanger = yes
+    #  # Enable the Alert command only if you have the mtx package loaded
+    #  Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    #  If you have smartctl, enable this, it has more info than tapeinfo
+    #  Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # A Linux or Solaris LTO-2 tape drive
+    #
+    #Device {
+    #  Name = LTO-2
+    #  Media Type = LTO-2
+    #  Archive Device = /dev/nst0
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  Maximum File Size = 3GB
+    ## Changer Command = "/opt/bacula/scripts/mtx-changer %c %o %S %a %d"
+    ## Changer Device = /dev/sg0
+    ## AutoChanger = yes
+    #  # Enable the Alert command only if you have the mtx package loaded
+    ## Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    ## If you have smartctl, enable this, it has more info than tapeinfo
+    ## Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # A Linux or Solaris LTO-3 tape drive
+    #
+    #Device {
+    #  Name = LTO-3
+    #  Media Type = LTO-3
+    #  Archive Device = /dev/nst0
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  Maximum File Size = 4GB
+    # Changer Command = "/opt/bacula/scripts/mtx-changer %c %o %S %a %d"
+    # Changer Device = /dev/sg0
+    # AutoChanger = yes
+    #  #
+    #  # New alert command in Bacula 9.0.0
+    #  #  Note: you must have the sg3_utils (rpms) or the
+    #  #        sg3-utils (deb) installed on your system.
+    #  #        and you must set the correct control device that
+    #  #        corresponds to the Archive Device
+    #  Control Device = /dev/sg??  # must be SCSI ctl for /dev/nst0
+    #  Alert Command = "/opt/bacula/scripts/tapealert %l"
+    #
+    #  # Enable the Alert command only if you have the mtx package loaded
+    ## Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    ## If you have smartctl, enable this, it has more info than tapeinfo
+    ## Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # A Linux or Solaris LTO-4 tape drive
+    #
+    #Device {
+    #  Name = LTO-4
+    #  Media Type = LTO-4
+    #  Archive Device = /dev/nst0
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  Maximum File Size = 5GB
+    # Changer Command = "/opt/bacula/scripts/mtx-changer %c %o %S %a %d"
+    # Changer Device = /dev/sg0
+    # AutoChanger = yes
+    #  #
+    #  # New alert command in Bacula 9.0.0
+    #  #  Note: you must have the sg3_utils (rpms) or the
+    #  #        sg3-utils (deb) installed on your system.
+    #  #        and you must set the correct control device that
+    #  #        corresponds to the Archive Device
+    #  Control Device = /dev/sg??  # must be SCSI ctl for /dev/nst0
+    #  Alert Command = "/opt/bacula/scripts/tapealert %l"
+    #
+    #  # Enable the Alert command only if you have the mtx package loaded
+    ## Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    ## If you have smartctl, enable this, it has more info than tapeinfo
+    ## Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # An HP-UX tape drive
+    #
+    #Device {
+    #  Name = Drive-1                      #
+    #  Drive Index = 0
+    #  Media Type = DLT-8000
+    #  Archive Device = /dev/rmt/1mnb
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes;
+    #  RemovableMedia = yes;
+    #  RandomAccess = no;
+    #  AutoChanger = no
+    #  Two EOF = yes
+    #  Hardware End of Medium = no
+    #  Fast Forward Space File = no
+    #  #
+    #  # New alert command in Bacula 9.0.0
+    #  #  Note: you must have the sg3_utils (rpms) or the
+    #  #        sg3-utils (deb) installed on your system.
+    #  #        and you must set the correct control device that
+    #  #        corresponds to the Archive Device
+    #  Control Device = /dev/sg??  # must be SCSI ctl for /dev/rmt/1mnb
+    #  Alert Command = "/opt/bacula/scripts/tapealert %l"
+    #
+    #  #
+    #  # Enable the Alert command only if you have the mtx package loaded
+    #  Alert Command = "sh -c 'tapeinfo -f %c |grep TapeAlert|cat'"
+    #  If you have smartctl, enable this, it has more info than tapeinfo
+    #  Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # A FreeBSD tape drive
+    #
+    #Device {
+    #  Name = DDS-4
+    #  Description = "DDS-4 for FreeBSD"
+    #  Media Type = DDS-4
+    #  Archive Device = /dev/nsa1
+    #  AutomaticMount = yes;               # when device opened, read it
+    #  AlwaysOpen = yes
+    #  Offline On Unmount = no
+    #  Hardware End of Medium = no
+    #  BSF at EOM = yes
+    #  Backward Space Record = no
+    #  Fast Forward Space File = no
+    #  TWO EOF = yes
+    #  #
+    #  # New alert command in Bacula 9.0.0
+    #  #  Note: you must have the sg3_utils (rpms) or the
+    #  #        sg3-utils (deb) installed on your system.
+    #  #        and you must set the correct control device that
+    #  #        corresponds to the Archive Device
+    #  Control Device = /dev/sg??  # must be SCSI ctl for /dev/nsa1
+    #  Alert Command = "/opt/bacula/scripts/tapealert %l"
+    #
+    #  If you have smartctl, enable this, it has more info than tapeinfo
+    #  Alert Command = "sh -c 'smartctl -H -l error %c'"
+    #}
+
+    #
+    # Send all messages to the Director,
+    # mount messages also are sent to the email address
+    #
+    Messages {
+      Name = Standard
+      director = bacula-dir = all
+    }
+
+
+    # # Include bacula-sd-wasabi.conf for Wasabi Cloud provider
+    # @/opt/bacula/etc/bacula-sd-wasabi.conf
+    #
+
+    # # Include bacula-sd-s3.conf for AWS S3 Cloud provider
+    # @/opt/bacula/etc/bacula-sd-s3.conf
+    #
+    # Define a virtual autochanger for Wasabi Cloud
+    #
+    # CloudStorage1 => us-east-2
+    # CloudStorage2 => eu-central-1
+    # CloudStorage3 => us-west-1
+    # 
+    # Change AccessKey and SecretKey on Cloud resource
+    #
+
+    # Autochangers
+
+    Autochanger {
+      Name = "CloudAutoChanger1"
+      Device = CloudStorage1
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+    #
+    #Autochanger {
+    #  Name = "CloudAutoChanger2"
+    #  Device = CloudStorage2
+    #  Changer Command = ""
+    #  Changer Device = /dev/null
+    #}
+    #
+    #Autochanger {
+    #  Name = "CloudAutoChanger3"
+    #  Device = CloudStorage3
+    #  Changer Command = ""
+    #  Changer Device = /dev/null
+    #}
+    #
+
+
+    # Devices
+
+    Device {
+      Name = "CloudStorage1"
+      Device Type = "Cloud"
+      Cloud = "WasabiS3-cloud-us-east-2"
+      Maximum Part Size = 2M
+      Maximum File Size = 2M
+      Media Type = "CloudType"
+      Archive Device = "/tmp"
+      LabelMedia = yes
+      Random Access = yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+    }
+
+    #
+    #Device {
+    #  Name = "CloudStorage2"
+    #  Device Type = "Cloud"
+    #  Cloud = "WasabiS3-cloud-eu-central-1"
+    #  Maximum Part Size = 2M
+    #  Maximum File Size = 2M
+    #  Media Type = "CloudType"
+    #  Archive Device = "/tmp"
+    #  LabelMedia = yes
+    #  Random Access = yes
+    #  AutomaticMount = yes
+    #  RemovableMedia = no
+    #  AlwaysOpen = no
+    #}
+    #
+    #
+    #Device {
+    #  Name = "CloudStorage3"
+    #  Device Type = "Cloud"
+    #  Cloud = "WasabiS3-cloud-us-west-1"
+    #  Maximum Part Size = 2M
+    #  Maximum File Size = 2M
+    #  Media Type = "CloudType"
+    #  Archive Device = "/tmp"
+    #  LabelMedia = yes
+    #  Random Access = yes
+    #  AutomaticMount = yes
+    #  RemovableMedia = no
+    #  AlwaysOpen = no
+    #}
+    #
+
+    # Cloud providers
+
+    Cloud {
+      Name = "WasabiS3-cloud-us-east-2"
+      Driver = "S3"
+      HostName = "s3.us-east-2.wasabisys.com"
+      BucketName = "eftechcombr-backup"
+      AccessKey = "ABC"
+      SecretKey = "DEF"
+      Protocol = HTTPS
+      UriStyle = "VirtualHost"
+      Truncate Cache = "AfterUpload"
+      Upload = "EachPart"
+      MaximumUploadBandwidth = 10MB/s
+    }
+    #
+    #Cloud {
+    #  Name = "WasabiS3-cloud-eu-central-1"
+    #  Driver = "S3"
+    #  HostName = "s3.eu-central-1.wasabisys.com"
+    #  BucketName = "eftechcombr-backup2"
+    #  AccessKey = "ABC"
+    #  SecretKey = "DEF"
+    #  Protocol = HTTPS
+    #  UriStyle = "VirtualHost"
+    #  Truncate Cache = "AfterUpload"
+    #  Upload = "EachPart"
+    #  MaximumUploadBandwidth = 10MB/s
+    #}
+
+
+    #Cloud {
+    #  Name = "WasabiS3-cloud-us-west-1"
+    #  Driver = "S3"
+    #  HostName = "s3.us-west-1.wasabisys.com"
+    #  BucketName = "eftechcombr-backup3"
+    #  AccessKey = "ABC"
+    #  SecretKey = "DEF"
+    #  Protocol = HTTPS
+    #  UriStyle = "VirtualHost"
+    #  Truncate Cache = "AfterUpload"
+    #  Upload = "EachPart"
+    #  MaximumUploadBandwidth = 10MB/s
+    #}
+    #
+    # Define a virtual autochanger for AWS S3
+    #
+    # Change AccessKey and SecretKey on Cloud resource
+    #
+
+    # Autochangers
+
+    Autochanger {
+      Name = "CloudAutoChangerS3"
+      Device = CloudStorageS3
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+
+    # Devices
+
+    Device {
+      Name = "CloudStorageS3"
+      Device Type = "Cloud"
+      Cloud = "S3-cloud-us-west-2"
+      Maximum Part Size = 2M
+      Maximum File Size = 2M
+      Media Type = "CloudType"
+      Archive Device = "/tmp"
+      LabelMedia = yes
+      Random Access = yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+    }
+
+    # Cloud providers
+    # Hostname see https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+
+    Cloud {
+      Name = "S3-cloud-us-west-2"
+      Driver = "S3"
+      HostName = "s3.us-west-2.amazonaws.com"
+      BucketName = "eftechcombr-bacula"
+      AccessKey = "AKIA33MZDCX3OLN7A6DD"
+      SecretKey = "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"
+      Protocol = HTTPS
+      UriStyle = "VirtualHost"
+      Truncate Cache = "AfterUpload"
+      Upload = "EachPart"
+      Region = "us-west-2"
+      MaximumUploadBandwidth = 10MB/s
+    }
+    #
+    #
+
+---
+#-----------------------------------------------------------
+# Baculum-API (Aplicación Principal)
+#-----------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: baculum-api
+  name: baculum-api
+  namespace: bacula
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baculum-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: baculum-api
+    spec:
+      initContainers:
+      - image: docker.io/eftechcombr/baculum:11.0.6-api
+        name: baculum-init
+        volumeMounts:
+        - name: baculum-api
+          mountPath: "/tmp/baculum/Config-api-apache"
+          readOnly: true
+        - name: etc-baculum-api
+          mountPath: "/etc/baculum"
+        command:
+          - bash
+          - -c
+          - "cp -Rf /tmp/baculum/Config-api-apache /etc/baculum && chmod a+w /etc/baculum/Config-api-apache"
+      containers:
+      - image: docker.io/eftechcombr/baculum:15.0.2-api
+        name: baculum-api
+        command:
+        - "/usr/sbin/apache2ctl"
+        args:
+        - "-D"
+        - "FOREGROUND"
+        ports:
+        - containerPort: 9096
+        volumeMounts:
+        - name: etc-baculum-api
+          mountPath: "/etc/baculum"
+        - name: bconsole
+          mountPath: "/opt/bacula/etc/bconsole.conf"
+          subPath: bconsole.conf
+          readOnly: true 
+        - name: bacula-dir
+          mountPath: "/opt/bacula/etc/bacula-dir.conf"
+          subPath: bacula-dir.conf
+          readOnly: true 
+        - name: bacula-fd
+          mountPath: "/opt/bacula/etc/bacula-fd.conf"
+          subPath: bacula-fd.conf 
+          readOnly: true
+        - name: bacula-sd
+          mountPath: "/opt/bacula/etc/bacula-sd.conf"
+          subPath: bacula-sd.conf 
+          readOnly: true
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+      volumes:
+      - name: bacula-sd
+        configMap:
+          name: bacula-sd
+      - name: bacula-dir
+        configMap:
+          name: bacula-dir
+      - name: bacula-fd
+        configMap:
+          name: bacula-fd
+      - name: baculum-api
+        configMap:
+          name: baculum-api
+      - name: bconsole
+        configMap: 
+          name: bconsole
+      - name: etc-baculum-api
+        emptyDir: {}
+
+---
+#-----------------------------------------------------------
+# Modo de publicacion de Baculum-API
+#-----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: baculum-api
+  name: baculum-api
+  namespace: bacula
+spec:
+  type: ClusterIP
+  selector:
+    app: baculum-api
+  ports:
+  - port: 9096
+    protocol: TCP
+    targetPort: 9096
