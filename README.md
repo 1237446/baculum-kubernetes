@@ -2,7 +2,7 @@
 Instalacion de bacula con baculum en kubernetes
 
 > [\!TIP]
-> Si no tienes un clúster de Kubernetes, puedes seguir mi [guía de instalación](https://github.com/1237446/Instalacion-de-Kubernetes).
+> Si no tienes un clúster de Kubernetes, puedes seguir mi [guía de instalación](https://github.com/1237446/Instalacion-de-RK2-con-Cilium).
 
 -----
 
