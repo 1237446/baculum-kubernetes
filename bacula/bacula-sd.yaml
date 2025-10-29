@@ -1,0 +1,61 @@
+#-----------------------------------------------------------
+# Bacula-sd (Aplicación Principal)
+#-----------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bacula-sd
+  name: bacula-sd
+  namespace: bacula
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bacula-sd
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: bacula-sd
+    spec:
+      containers:
+      - image: docker.io/eftechcombr/bacula:15.0.2-storage
+        name: bacula-sd
+        ports:
+        - containerPort: 9103
+        volumeMounts:
+        - name: bacula-sd
+          mountPath: "/opt/bacula/etc"
+          readOnly: true
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi" 
+      volumes:
+      - name: bacula-sd
+        configMap:
+          name: bacula-sd
+
+---
+#-----------------------------------------------------------
+# Modo de publicacion de Bacula-sd
+#-----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: bacula-sd
+  name: bacula-sd
+  namespace: bacula
+spec:
+  type: ClusterIP
+  selector:
+    app: bacula-sd
+  ports:
+  - port: 9103
+    protocol: TCP
+    targetPort: 9103
