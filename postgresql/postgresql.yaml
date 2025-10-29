@@ -1,0 +1,50 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql-node
+  namespace: bacula
+spec:
+  instances: 3
+  
+  imageName: ghcr.io/cloudnative-pg/postgresql:15
+
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      dataChecksums: true
+      database: bacula
+      owner: bacula
+      secret:
+        name: postgresql-secrets
+      
+      options:
+        - '--encoding=SQL_ASCII'
+        - '--lc-collate=C'
+        - '--lc-ctype=C'
+
+      postInitApplicationSQLRefs:
+        configMapRefs:
+          - name: bacula-schema-tables
+            key: tables.sql
+          - name: bacula-schema-grants
+            key: grants.sql
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+  storage:
+    size: 50Gi
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: ceph-block
+      volumeMode: Filesystem
