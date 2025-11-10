@@ -25,9 +25,9 @@ Utilizaremos el operador de CloudNativePG (CNPG) para gestionar nuestro clúster
   * **Creamos los configmaps:**
 
       ```bash
-      kubectl create configmap bacula-schema-grants --from-file=grants.sql=./grant_postgresql_privileges.sql --namespace bacula
+      kubectl create configmap bacula-schema-grants --from-file=grants.sql=./postgresql/grant_postgresql_privileges.sql --namespace bacula
 
-      kubectl create configmap bacula-schema-tables --from-file=tables.sql=./make_postgresql_tables.sql --namespace bacula
+      kubectl create configmap bacula-schema-tables --from-file=tables.sql=./postgresql/make_postgresql_tables.sql --namespace bacula
       ```
 
   * **Despliega el clúster de Postgresql:**
