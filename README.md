@@ -33,7 +33,7 @@ Utilizaremos el operador de CloudNativePG (CNPG) para gestionar nuestro clúster
   * **Despliega el clúster de Postgresql:**
   
       ```bash
-      kubectl apply -f postgresql.yaml
+      kubectl apply -f postgresql.yaml -f postgresql-secrets.yaml
       ```
   
   * **Verifica que los Pods del clúster estén listos:**
