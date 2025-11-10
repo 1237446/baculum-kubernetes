@@ -1,3 +1,98 @@
+#---------------------------------------------------------------------
+# Archivo de configuracion baculum-sd
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-sd
+  namespace: bacula
+data: 
+  bacula-sd.conf: |-
+    # ---
+    # 1. Definición del Storage Daemon (este propio almacén)
+    # ---
+    Storage {
+      Name = bacula-sd
+      SDPort = 9103
+      WorkingDirectory = "/opt/bacula/working"
+      Pid Directory = "/opt/bacula/working"
+      Plugin Directory = "/opt/bacula/plugins"
+      Maximum Concurrent Jobs = 20
+    }
+
+    # ---
+    # 2. Autorización de Directores
+    # ---
+    Director {
+      Name = bacula-dir
+      Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
+    }
+
+    Director {
+      Name = bacula-mon
+      Password = "5p+emSGBrRv7sdsOJjlXxOjIDIzvivTLzY8ywWCjz02x"
+      Monitor = yes
+    }
+
+    # ---
+    # 3. Definición del Autochanger (Almacén de Disco)
+    # Esto debe coincidir con el 'Device' en bacula-dir.conf
+    # ---
+    Autochanger {
+      Name = FileChgr1
+      # Lista los dispositivos que maneja este "cambiador"
+      Device = FileChgr1-Dev1, FileChgr1-Dev2
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+
+    # ---
+    # 4. Definición de Dispositivos (los "volúmenes" físicos)
+    # ---
+    Device {
+      Name = FileChgr1-Dev1
+      Media Type = File1           # Coincide con bacula-dir.conf
+      
+      # ¡IMPORTANTE! Esta es la ruta DENTRO del pod donde se 
+      # guardarán los volúmenes de respaldo. Debes montar 
+      # un Persistent Volume (PV) en esta ruta.
+      Archive Device = /opt/bacula/archive
+      
+      LabelMedia = yes
+      Random Access = Yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+      Maximum Concurrent Jobs = 5  # Permite 5 trabajos en este dispositivo
+    }
+
+    Device {
+      Name = FileChgr1-Dev2
+      Media Type = File1           # Coincide con bacula-dir.conf
+
+      # ¡IMPORTANTE! Mismo directorio que el Dev1
+      Archive Device = /opt/bacula/archive
+
+      LabelMedia = yes
+      Random Access = Yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+      Maximum Concurrent Jobs = 5  # Permite 5 trabajos en este dispositivo
+    }
+    
+    # (Se eliminaron FileChgr2, CloudAutoChanger1 y CloudAutoChangerS3 
+    #  junto con sus dispositivos y definiciones Cloud)
+
+    # ---
+    # 5. Mensajes
+    # ---
+    Messages {
+      Name = Standard
+      director = bacula-dir = all
+    }
+    
+---
 #-----------------------------------------------------------
 # Bacula-sd (Aplicación Principal)
 #-----------------------------------------------------------
