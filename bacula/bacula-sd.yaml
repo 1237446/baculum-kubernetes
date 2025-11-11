@@ -6,11 +6,11 @@ kind: ConfigMap
 metadata:
   name: bacula-sd
   namespace: bacula
-data: 
+data:
   bacula-sd.conf: |-
-    # ---
-    # 1. Definición del Storage Daemon (este propio almacén)
-    # ---
+    #---------------------------------------------------------------------
+    # Definición del Storage Daemon (este propio almacén)
+    #---------------------------------------------------------------------
     Storage {
       Name = bacula-sd
       SDPort = 9103
@@ -20,9 +20,9 @@ data:
       Maximum Concurrent Jobs = 20
     }
 
-    # ---
-    # 2. Autorización de Directores
-    # ---
+    #---------------------------------------------------------------------
+    # Autorización de Directores
+    #---------------------------------------------------------------------
     Director {
       Name = bacula-dir
       Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
@@ -34,10 +34,10 @@ data:
       Monitor = yes
     }
 
-    # ---
-    # 3. Definición del Autochanger (Almacén de Disco)
+    #---------------------------------------------------------------------
+    # Definición del Autochanger (Almacén de Disco)
     # Esto debe coincidir con el 'Device' en bacula-dir.conf
-    # ---
+    #---------------------------------------------------------------------
     Autochanger {
       Name = FileChgr1
       # Lista los dispositivos que maneja este "cambiador"
@@ -46,18 +46,18 @@ data:
       Changer Device = /dev/null
     }
 
-    # ---
-    # 4. Definición de Dispositivos (los "volúmenes" físicos)
-    # ---
+    #---------------------------------------------------------------------
+    # Definición de Dispositivos (los "volúmenes" físicos)
+    #---------------------------------------------------------------------
     Device {
       Name = FileChgr1-Dev1
       Media Type = File1           # Coincide con bacula-dir.conf
-      
+
       # ¡IMPORTANTE! Esta es la ruta DENTRO del pod donde se 
       # guardarán los volúmenes de respaldo. Debes montar 
       # un Persistent Volume (PV) en esta ruta.
       Archive Device = /opt/bacula/archive
-      
+
       LabelMedia = yes
       Random Access = Yes
       AutomaticMount = yes
@@ -80,18 +80,35 @@ data:
       AlwaysOpen = no
       Maximum Concurrent Jobs = 5  # Permite 5 trabajos en este dispositivo
     }
-    
+
     # (Se eliminaron FileChgr2, CloudAutoChanger1 y CloudAutoChangerS3 
     #  junto con sus dispositivos y definiciones Cloud)
 
-    # ---
-    # 5. Mensajes
-    # ---
+    #---------------------------------------------------------------------
+    # Mensajes
+    #---------------------------------------------------------------------
     Messages {
       Name = Standard
       director = bacula-dir = all
     }
-    
+
+---
+#-----------------------------------------------------------
+# PersistentVolumeClaim para Bacula-sd
+#-----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bacula-sd-data
+  namespace: bacula
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: ceph-block
+
 ---
 #-----------------------------------------------------------
 # Bacula-sd (Aplicación Principal)
@@ -119,21 +136,30 @@ spec:
         name: bacula-sd
         ports:
         - containerPort: 9103
-        volumeMounts:
-        - name: bacula-sd
-          mountPath: "/opt/bacula/etc"
-          readOnly: true
         resources:
           requests:
             cpu: "0.5"
             memory: "512Mi"
           limits:
             cpu: "1"
-            memory: "1Gi" 
+            memory: "1Gi"
+        volumeMounts:
+        - name: bacula-sd
+          mountPath: "/opt/bacula/etc"
+          readOnly: true
+        - name: bacula-storage
+          mountPath: /opt/bacula/archive
+          subPath: archive
+        - name: bacula-storage
+          mountPath: /opt/bacula/working
+          subPath: working
       volumes:
       - name: bacula-sd
         configMap:
           name: bacula-sd
+      - name: bacula-storage
+        persistentVolumeClaim:
+          claimName: bacula-sd-data
 
 ---
 #-----------------------------------------------------------
@@ -147,7 +173,7 @@ metadata:
   name: bacula-sd
   namespace: bacula
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: bacula-sd
   ports:
