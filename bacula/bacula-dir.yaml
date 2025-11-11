@@ -9,11 +9,11 @@ metadata:
   labels:
     app: bacula-dir
     component: director
-data: 
+data:
   bacula-dir.conf: |-
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Recurso Principal del Director
-    # ======================================================================
+    #---------------------------------------------------------------------
     Director {
       Name = bacula-dir
       DIRport = 9101
@@ -25,24 +25,24 @@ data:
       Messages = Daemon
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Horarios (Schedules)
-    # ======================================================================
+    #---------------------------------------------------------------------
     Schedule {
       Name = "WeeklyCycle"
       Run = Full 1st sun at 23:05
       Run = Differential 2nd-5th sun at 23:05
       Run = Incremental mon-sat at 23:05
     }
-    
+
     Schedule {
       Name = "WeeklyCycleAfterBackup"
       Run = Full sun-sat at 23:10
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # FileSets (El "QUÉ" respaldar)
-    # ======================================================================
+    #---------------------------------------------------------------------
 
     # --- FileSet para Clientes Windows ---
     FileSet {
@@ -105,9 +105,9 @@ data:
       }
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # JobDefs (Plantillas de Trabajos)
-    # ======================================================================
+    #---------------------------------------------------------------------
 
     # --- Plantilla para CUALQUIER cliente Windows ---
     JobDefs {
@@ -149,9 +149,9 @@ data:
       Write Bootstrap = "/opt/bacula/working/%c.bsr"
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Clientes (Los "QUIÉN")
-    # ======================================================================
+    #---------------------------------------------------------------------
 
     # --- Cliente "Sí Mismo" (el FD que corre junto al Director) ---
     Client {
@@ -160,6 +160,18 @@ data:
       FDPort = 9102
       Catalog = MyCatalog
       Password = "eso80TrxzhXkRgaQVI6ZYrSzAZ4E9KFNp0Y+T1HHVWBi"
+      File Retention = 60 days
+      Job Retention = 6 months
+      AutoPrune = yes
+    }
+
+    # --- Cliente: Agente de Windows --- TESTING
+    Client {
+      Name = desktop-o5s41ct-fd      
+      Address = 172.16.8.175
+      FDPort = 9102
+      Password = "3u+WhVEEPYiFBT+27JjyIsSr7hXmrORFmL30e1GTfusp"
+      Catalog = MyCatalog
       File Retention = 60 days
       Job Retention = 6 months
       AutoPrune = yes
@@ -183,19 +195,26 @@ data:
     #   Password = "password-secreto-para-linux-01"
     # }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Trabajos (Jobs - Las "Órdenes de Trabajo")
-    # ======================================================================
+    #---------------------------------------------------------------------
 
     # --- Trabajo: Respaldo del Catálogo (Sí Mismo) ---
+    # Job {
+    #   Name = "Backup-Self-Catalog"
+    #   JobDefs = "JobDefs-Plantilla-Self"    # Hereda de la plantilla "Self"
+    #   Level = Full
+    #   FileSet = "Catalog"
+    #   Schedule = "WeeklyCycleAfterBackup"
+    #   ClientRunBeforeJob = "/opt/bacula/scripts/make_catalog_backup.pl MyCatalog"
+    #   ClientRunAfterJob = "/opt/bacula/scripts/delete_catalog_backup"
+    # }
+
+    # --- Job para el Cliente Windows --- TESTING 
     Job {
-      Name = "Backup-Self-Catalog"
-      JobDefs = "JobDefs-Plantilla-Self"    # Hereda de la plantilla "Self"
-      Level = Full
-      FileSet = "Catalog"
-      Schedule = "WeeklyCycleAfterBackup"
-      ClientRunBeforeJob = "/opt/bacula/scripts/make_catalog_backup.pl MyCatalog"
-      ClientRunAfterJob = "/opt/bacula/scripts/delete_catalog_backup"
+      Name = "Backup-PC-Windows-Desktop"
+      JobDefs = "JobDefs-Plantilla-Windows"
+      Client = "desktop-o5s41ct-fd"
     }
 
     # --- Trabajo: Respaldo de la Configuración (Sí Mismo) ---
@@ -238,13 +257,13 @@ data:
       Where = /tmp/bacula-restores
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Almacenamiento (Storage / Autochanger)
     # Solo dejamos UNA definición de almacenamiento local.
-    # ======================================================================
+    #---------------------------------------------------------------------
     Autochanger {
       Name = "Storage-Local-Disco"      # Nombre simplificado
-      Address = bacula-sd               # K8s DNS para el servicio bacula-sd
+      Address = 172.16.9.103               # K8s DNS para el servicio bacula-sd
       SDPort = 9103
       Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
       Device = FileChgr1                # Debe coincidir con tu bacula-sd.conf
@@ -252,9 +271,9 @@ data:
       Maximum Concurrent Jobs = 10
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Pools (Solo dejamos UN pool por defecto)
-    # ======================================================================
+    #---------------------------------------------------------------------
     Pool {
       Name = Default
       Pool Type = Backup
@@ -266,9 +285,9 @@ data:
       Label Format = "Vol-"
     }
 
-    # ======================================================================
+    #---------------------------------------------------------------------
     # Recursos del Sistema (Catálogo, Consola, Mensajes)
-    # ======================================================================
+    #---------------------------------------------------------------------
     Catalog {
       Name = MyCatalog
       dbname = "bacula"
@@ -276,26 +295,26 @@ data:
       dbpassword = "bacula"
       DB address = "postgresql-node-rw.bacula.svc.cluster.local"
     }
-    
+
     Messages {
       Name = Standard
       console = all, !skipped, !saved
       stdout = all, !skipped
       catalog = all
     }
-    
+
     Messages {
       Name = Daemon
       console = all, !skipped, !saved
       stdout = all, !skipped
     }
-    
+
     Console {
       Name = bacula-mon
       Password = "r0V/Hx0TUwQ4TlnX1lyUHf8J8v9XvRBqnHTRW9+CB614"
       CommandACL = status, .status
     }
-    
+
     # Incluir cualquier configuración extra en /opt/bacula/etc/bacula-dir.d/
     @|"sh -c 'for f in /opt/bacula/etc/bacula-dir.d/*.conf ; do echo @${f} ; done'"
 
@@ -325,7 +344,7 @@ metadata:
   labels:
     app: bacula-dir
     component: bconsole
-data: 
+data:
   bconsole.conf: |-
     #
     Director {
@@ -334,7 +353,7 @@ data:
       address = bacula-dir
       Password = "XDnaVZYU9F4QhqUGMPxiOXsJaji23mNG3FaAM9Z2q1c/"
     }
- 
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -419,7 +438,7 @@ spec:
         configMap:
           name: bacula-dir
       - name: bconsole
-        configMap: 
+        configMap:
           name: bconsole
       - name: bacula-dir-extra-conf
         configMap:
@@ -439,7 +458,7 @@ metadata:
   name: bacula-dir
   namespace: bacula
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: bacula-dir
   ports:
