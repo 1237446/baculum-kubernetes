@@ -166,7 +166,7 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
 
    Para garantizar la comunicación bidireccional correcta con el servidor, configuraremos reglas tanto para el tráfico entrante como saliente.
 
-   > [\!NOTE]
+   > [\!TIP]
    > Otra alternativa para activar el firewall es usando el script ![**bacula.bat**](bacula.bat)
    
    *  **Abrir configuración:** Busque y abra "Windows Defender Firewall con seguridad avanzada".
