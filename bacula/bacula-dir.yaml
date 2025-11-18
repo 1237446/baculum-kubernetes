@@ -1,360 +1,71 @@
 #---------------------------------------------------------------------
-# Archivo de configuracion bacula-dir (Director)
+# Archivo de configuracion bacularis-web (API Host)
 #---------------------------------------------------------------------
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bacula-dir
+  name: bacularis-api
   namespace: bacula
-  labels:
-    app: bacula-dir
-    component: director
 data:
-  bacula-dir.conf: |-
-    #---------------------------------------------------------------------
-    # Recurso Principal del Director
-    #---------------------------------------------------------------------
-    Director {
-      Name = bacula-dir
-      DIRport = 9101
-      QueryFile = "/opt/bacula/scripts/query.sql"
-      WorkingDirectory = "/opt/bacula/working"
-      PidDirectory = "/opt/bacula/working"
-      Maximum Concurrent Jobs = 20
-      Password = "XDnaVZYU9F4QhqUGMPxiOXsJaji23mNG3FaAM9Z2q1c/" # Consola
-      Messages = Daemon
-    }
+  api.conf: |-
+    [api]
+    auth_type = "basic"
+    debug = "0"
+    lang = "en"
 
-    #---------------------------------------------------------------------
-    # Horarios (Schedules)
-    #---------------------------------------------------------------------
-    Schedule {
-      Name = "WeeklyCycle"
-      Run = Full 1st sun at 23:05
-      Run = Differential 2nd-5th sun at 23:05
-      Run = Incremental mon-sat at 23:05
-    }
+    [db]
+    enabled = "1"
+    type = "pgsql"
+    name = "bacula"
+    login = "bacula"
+    password = ""
+    ip_addr = "localhost"
+    port = "5432"
+    path = ""
 
-    Schedule {
-      Name = "WeeklyCycleAfterBackup"
-      Run = Full sun-sat at 23:10
-    }
+    [bconsole]
+    enabled = "1"
+    bin_path = "/usr/sbin/bconsole"
+    cfg_path = "/etc/bacula/bconsole.conf"
+    use_sudo = "1"
 
-    #---------------------------------------------------------------------
-    # FileSets (El "QUÉ" respaldar)
-    #---------------------------------------------------------------------
+    [jsontools]
+    enabled = "1"
+    use_sudo = "1"
+    bconfig_dir = "/var/www/bacularis/protected/vendor/bacularis/bacularis-api/API/Config"
+    bdirjson_path = "/usr/sbin/bdirjson"
+    dir_cfg_path = "/etc/bacula/bacula-dir.conf"
+    bsdjson_path = "/usr/sbin/bsdjson"
+    sd_cfg_path = "/etc/bacula/bacula-sd.conf"
+    bfdjson_path = "/usr/sbin/bfdjson"
+    fd_cfg_path = "/etc/bacula/bacula-fd.conf"
+    bbconsjson_path = "/usr/sbin/bbconsjson"
+    bcons_cfg_path = "/etc/bacula/bconsole.conf"
 
-    # --- FileSet para Clientes Windows ---
-    FileSet {
-      Name = "FileSet-Windows-Server"
-      Include {
-        Options {
-          Signature = MD5
-          Compression = GZIP
-        }
-        # Rutas de ejemplo. Ajusta esto a tus necesidades.
-        File = "C:/Users"
-        File = "C:/inetpub"
-      }
-      Exclude {
-        File = "*.tmp"
-        File = "*.bak"
-        File = "C:/Users/Public"
-      }
-    }
+    [actions]
+    enabled = "1"
+    use_sudo = "1"
+    dir_start = "/etc/bacula/scripts/bacula-ctl-dir start"
+    dir_stop = "/etc/bacula/scripts/bacula-ctl-dir stop"
+    dir_restart = "/etc/bacula/scripts/bacula-ctl-dir restart"
+    sd_start = "/etc/bacula/scripts/bacula-ctl-sd start"
+    sd_stop = "/etc/bacula/scripts/bacula-ctl-sd stop"
+    sd_restart = "/etc/bacula/scripts/bacula-ctl-sd restart"
+    fd_start = "/etc/bacula/scripts/bacula-ctl-fd start"
+    fd_stop = "/etc/bacula/scripts/bacula-ctl-fd stop"
+    fd_restart = "/etc/bacula/scripts/bacula-ctl-fd restart"
 
-    # --- FileSet para Clientes Linux ---
-    FileSet {
-      Name = "FileSet-Linux-Server"
-      Include {
-        Options {
-          Signature = MD5
-          Compression = GZIP
-        }
-        # Rutas de ejemplo para un servidor Linux
-        File = "/home"
-        File = "/etc"
-        File = "/var/www"
-      }
-      Exclude {
-        File = "/var/run"
-        File = "/var/cache"
-        File = "/tmp"
-      }
-    }
+  bacularis.users: |-
+    admin:$apr1$6hYFTlhE$0vj91PWcNlEjodBYuCEr9/
 
-    # --- FileSet para la CONFIGURACIÓN del Director ---
-    FileSet {
-      Name = "FileSet-Self-Config"
-      Include {
-        Options { signature = MD5 }
-        # Respalda solo los archivos de configuración
-        File = /opt/bacula/etc
-      }
-      Exclude {
-        File = /opt/bacula/working
-      }
-    }
-
-    # --- FileSet para el CATÁLOGO (Base de Datos) ---
-    FileSet {
-      Name = "Catalog"
-      Include {
-        Options { signature = MD5 }
-        File = "/opt/bacula/working/bacula.sql"
-      }
-    }
-
-    #---------------------------------------------------------------------
-    # JobDefs (Plantillas de Trabajos)
-    #---------------------------------------------------------------------
-
-    # --- Plantilla para CUALQUIER cliente Windows ---
-    JobDefs {
-      Name = "JobDefs-Plantilla-Windows"
-      Type = Backup
-      Level = Incremental
-      Schedule = "WeeklyCycle"          # Usa el horario que definimos
-      FileSet = "FileSet-Windows-Server"  # Usa el FileSet de Windows
-      Storage = "Storage-Local-Disco"   # Guarda en el disco local
-      Pool = "Default"
-      Messages = Standard
-      Priority = 10
-      Write Bootstrap = "/opt/bacula/working/%c.bsr"
-    }
-
-    # --- Plantilla para CUALQUIER cliente Linux ---
-    JobDefs {
-      Name = "JobDefs-Plantilla-Linux"
-      Type = Backup
-      Level = Incremental
-      Schedule = "WeeklyCycle"
-      FileSet = "FileSet-Linux-Server"  # Usa el FileSet de Linux
-      Storage = "Storage-Local-Disco"
-      Pool = "Default"
-      Messages = Standard
-      Priority = 10
-      Write Bootstrap = "/opt/bacula/working/%c.bsr"
-    }
-
-    # --- Plantilla para los trabajos de "sí mismo" ---
-    JobDefs {
-      Name = "JobDefs-Plantilla-Self"
-      Type = Backup
-      Client = bacula-fd                # Siempre usa el cliente "propio"
-      Storage = "Storage-Local-Disco"
-      Pool = "Default"
-      Messages = Standard
-      Priority = 11                     # Mayor prioridad
-      Write Bootstrap = "/opt/bacula/working/%c.bsr"
-    }
-
-    #---------------------------------------------------------------------
-    # Clientes (Los "QUIÉN")
-    #---------------------------------------------------------------------
-
-    # --- Cliente "Sí Mismo" (el FD que corre junto al Director) ---
-    Client {
-      Name = bacula-fd
-      Address = bacula-fd             # K8s DNS para el servicio bacula-fd
-      FDPort = 9102
-      Catalog = MyCatalog
-      Password = "eso80TrxzhXkRgaQVI6ZYrSzAZ4E9KFNp0Y+T1HHVWBi"
-      File Retention = 60 days
-      Job Retention = 6 months
-      AutoPrune = yes
-    }
-
-    # --- Cliente: Agente de Windows --- TESTING
-    Client {
-      Name = desktop-o5s41ct-fd      
-      Address = 172.16.8.175
-      FDPort = 9102
-      Password = "3u+WhVEEPYiFBT+27JjyIsSr7hXmrORFmL30e1GTfusp"
-      Catalog = MyCatalog
-      File Retention = 60 days
-      Job Retention = 6 months
-      AutoPrune = yes
-    }
-
-    # --- EJEMPLO: Cómo agregar un Cliente Windows ---
-    # Descomenta y edita esto para cada agente Windows que tengas
-    #
-    # Client {
-    #   Name = "mi-windows-server-01-fd"
-    #   Address = 192.168.1.100  # <-- IP de tu agente Windows
-    #   Password = "password-secreto-para-win-01"
-    # }
-
-    # --- EJEMPLO: Cómo agregar un Cliente Linux ---
-    # Descomenta y edita esto para cada agente Linux que tengas
-    #
-    # Client {
-    #   Name = "mi-linux-server-01-fd"
-    #   Address = 192.168.1.200  # <-- IP de tu agente Linux
-    #   Password = "password-secreto-para-linux-01"
-    # }
-
-    #---------------------------------------------------------------------
-    # Trabajos (Jobs - Las "Órdenes de Trabajo")
-    #---------------------------------------------------------------------
-
-    # --- Trabajo: Respaldo del Catálogo (Sí Mismo) ---
-    # Job {
-    #   Name = "Backup-Self-Catalog"
-    #   JobDefs = "JobDefs-Plantilla-Self"    # Hereda de la plantilla "Self"
-    #   Level = Full
-    #   FileSet = "Catalog"
-    #   Schedule = "WeeklyCycleAfterBackup"
-    #   ClientRunBeforeJob = "/opt/bacula/scripts/make_catalog_backup.pl MyCatalog"
-    #   ClientRunAfterJob = "/opt/bacula/scripts/delete_catalog_backup"
-    # }
-
-    # --- Job para el Cliente Windows --- TESTING 
-    Job {
-      Name = "Backup-PC-Windows-Desktop"
-      JobDefs = "JobDefs-Plantilla-Windows"
-      Client = "desktop-o5s41ct-fd"
-    }
-
-    # --- Trabajo: Respaldo de la Configuración (Sí Mismo) ---
-    Job {
-      Name = "Backup-Self-Config"
-      JobDefs = "JobDefs-Plantilla-Self"
-      Level = Full
-      FileSet = "FileSet-Self-Config"
-      Schedule = "WeeklyCycle"
-    }
-
-    # --- EJEMPLO: Cómo agregar un Job para el Cliente Windows ---
-    # Descomenta esto cuando agregues el Cliente de arriba
-    #
-    # Job {
-    #   Name = "Backup-win-server-01"
-    #   Jobs = "JobDefs-Plantilla-Windows"  # Hereda de la plantilla Windows
-    #   Client = "mi-windows-server-01-fd"  # Lo único que cambia
-    # }
-
-    # --- EJEMPLO: Cómo agregar un Job para el Cliente Linux ---
-    # Descomenta esto cuando agregues el Cliente de arriba
-    #
-    # Job {
-    #   Name = "Backup-linux-server-01"
-    #   Jobs = "JobDefs-Plantilla-Linux"    # Hereda de la plantilla Linux
-    #   Client = "mi-linux-server-01-fd"    # Lo único que cambia
-    # }
-
-    # --- Trabajo: Restauración Genérica ---
-    Job {
-      Name = "RestoreFiles"
-      Type = Restore
-      Client = bacula-fd                # IMPORTANTE: Cambia esto al cliente
-                                        # de destino cuando restaures.
-      Storage = "Storage-Local-Disco"
-      FileSet = "FileSet-Linux-Server"  # No importa mucho para restaurar
-      Pool = "Default"
-      Messages = Standard
-      Where = /tmp/bacula-restores
-    }
-
-    #---------------------------------------------------------------------
-    # Almacenamiento (Storage / Autochanger)
-    # Solo dejamos UNA definición de almacenamiento local.
-    #---------------------------------------------------------------------
-    Autochanger {
-      Name = "Storage-Local-Disco"      # Nombre simplificado
-      Address = 172.16.9.103               # K8s DNS para el servicio bacula-sd
-      SDPort = 9103
-      Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
-      Device = FileChgr1                # Debe coincidir con tu bacula-sd.conf
-      Media Type = File1                # Debe coincidir con tu bacula-sd.conf
-      Maximum Concurrent Jobs = 10
-    }
-
-    #---------------------------------------------------------------------
-    # Pools (Solo dejamos UN pool por defecto)
-    #---------------------------------------------------------------------
-    Pool {
-      Name = Default
-      Pool Type = Backup
-      Recycle = yes
-      AutoPrune = yes
-      Volume Retention = 365 days       # Retiene datos por un año
-      Maximum Volume Bytes = 50G        # Divide los volúmenes en 50GB
-      Maximum Volumes = 100
-      Label Format = "Vol-"
-    }
-
-    #---------------------------------------------------------------------
-    # Recursos del Sistema (Catálogo, Consola, Mensajes)
-    #---------------------------------------------------------------------
-    Catalog {
-      Name = MyCatalog
-      dbname = "bacula"
-      dbuser = "bacula"
-      dbpassword = "bacula"
-      DB address = "postgresql-node-rw.bacula.svc.cluster.local"
-    }
-
-    Messages {
-      Name = Standard
-      console = all, !skipped, !saved
-      stdout = all, !skipped
-      catalog = all
-    }
-
-    Messages {
-      Name = Daemon
-      console = all, !skipped, !saved
-      stdout = all, !skipped
-    }
-
-    Console {
-      Name = bacula-mon
-      Password = "r0V/Hx0TUwQ4TlnX1lyUHf8J8v9XvRBqnHTRW9+CB614"
-      CommandACL = status, .status
-    }
-
-    # Incluir cualquier configuración extra en /opt/bacula/etc/bacula-dir.d/
-    @|"sh -c 'for f in /opt/bacula/etc/bacula-dir.d/*.conf ; do echo @${f} ; done'"
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: bacula-dir-dummy-conf
-  namespace: bacula
-  labels:
-    app: bacula-dir
-    component: director
-data:
-  # Un archivo .conf vacío para evitar que el glob falle
-  placeholder.conf: |
-    # Este archivo está vacío a propósito
+  basic.conf: |-
+    [admin]
+    bconsole_cfg_path = ""
 
 ---
 #---------------------------------------------------------------------
-# Archivo de configuracion baculum-web (bconsole)
+# ServiceAccount para Bacula-Director
 #---------------------------------------------------------------------
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: bconsole
-  namespace: bacula
-  labels:
-    app: bacula-dir
-    component: bconsole
-data:
-  bconsole.conf: |-
-    #
-    Director {
-      Name = bacula-dir
-      DIRport = 9101
-      address = bacula-dir
-      Password = "XDnaVZYU9F4QhqUGMPxiOXsJaji23mNG3FaAM9Z2q1c/"
-    }
-
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -363,6 +74,42 @@ metadata:
   labels:
     app: bacula-dir
     component: director
+
+---
+#-----------------------------------------------------------
+# PersistentVolumeClaim para Nextcloud (apps)
+#-----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bacula-dir-data
+  namespace: bacula
+spec:
+  storageClassName: ceph-filesystem
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+#-----------------------------------------------------------
+# PersistentVolumeClaim para Nextcloud (apps)
+#-----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-data
+  namespace: bacula
+spec:
+  storageClassName: ceph-filesystem
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
 
 ---
 #-----------------------------------------------------------
@@ -388,63 +135,82 @@ spec:
         app: bacula-dir
     spec:
       serviceAccountName: bacula-dir-sa
-      # securityContext:
-      #   runAsUser: 1000
-      #   runAsNonRoot: true
-      #   fsGroup: 1000
       terminationGracePeriodSeconds: 60
+      # -------------------------------------------------------
+      # INIT CONTAINER: Sincronización + Permisos de Ejecución
+      # -------------------------------------------------------
+      initContainers:
+      - name: init-bacula-config
+        image: bacularis/bacularis-api-dir:5.8.0-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "--- Iniciando reparación de permisos Bacula ---"
+            # 1. Asegurar directorios
+            mkdir -p /mnt/config/scripts         
+            # 2. Copiar scripts (Sobrescribir para reparar corruptos)
+            echo "Copiando scripts desde la imagen..."
+            cp -Rfv /etc/bacula/scripts/* /mnt/config/scripts/           
+            # 3. Copiar configuración base si falta
+            if [ ! -f "/mnt/config/bacula-dir.conf" ]; then
+               echo "Inicializando configuración base..."
+               find /etc/bacula -maxdepth 1 -type f -exec cp {} /mnt/config/ \;
+               cp -rn /etc/bacula/conf.d /mnt/config/ || true
+            fi
+            # 4. FIX CRÍTICO: ASIGNAR PROPIETARIO Y PERMISOS DE EJECUCIÓN
+            echo "Aplicando permisos..."
+            # A. El dueño debe ser bacula (UID suele ser 1000 o 33 en estas imagenes)
+            chown -R bacula:bacula /mnt/config
+            # B. Dar permisos totales (775) a todo para evitar 'Permission denied'
+            # Esto asegura que los scripts tengan el bit (+x) activado
+            chmod -R 775 /mnt/config
+            echo "--- Reparación completada. Listo para arrancar. ---"
+        volumeMounts:
+          - name: bacula-dir-data
+            mountPath: /mnt/config
       containers:
-      - image: docker.io/eftechcombr/bacula:15.0.2-director
+      - image: bacularis/bacularis-api-dir:5.8.0-alpine
         name: bacula-dir
         ports:
+        - containerPort: 9097
         - containerPort: 9101
-        livenessProbe:
-          tcpSocket:
-            port: 9101
-          initialDelaySeconds: 30
-          periodSeconds: 20
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          tcpSocket:
-            port: 9101
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: bacula-dir
-          mountPath: "/opt/bacula/etc/bacula-dir.conf"
-          subPath: bacula-dir.conf
-          readOnly: true
-        - name: bconsole
-          mountPath: "/opt/bacula/etc/bconsole.conf"
-          subPath: bconsole.conf
-          readOnly: true
-        - name: bacula-dir-extra-conf
-          mountPath: /opt/bacula/etc/bacula-dir.d/placeholder.conf
-          subPath: placeholder.conf
-        - name: bacula-logs
-          mountPath: /opt/bacula/log
         resources:
           requests:
             cpu: "0.5"
             memory: "512Mi"
           limits:
-            cpu: "1"
-            memory: "1Gi"
+            cpu: "2"
+            memory: "2Gi"
+        volumeMounts:
+        # Volumenes de bacula-dir.conf y bconsole.conf
+        - name: bacula-dir-data
+          mountPath: /etc/bacula/
+        # Volumenes de postsgresql
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        # Volumenes de bacularis-api
+        - name: bacularis-api
+          mountPath: /var/www/bacularis/protected/vendor/bacularis/bacularis-api/API/Config/api.conf
+          subPath: api.conf
+        - name: bacularis-api
+          mountPath: /var/www/bacularis/protected/vendor/bacularis/bacularis-api/API/Logs/bacularis.users
+          subPath: bacularis.users
+        - name: bacularis-api
+          mountPath: /var/www/bacularis/protected/vendor/bacularis/bacularis-common/Common/Working/basic.conf
+          subPath: basic.conf
       volumes:
-      - name: bacula-dir
+      # Volumenes de bacula-dir 
+      - name: bacula-dir-data
+        persistentVolumeClaim:
+          claimName: bacula-dir-data
+      # Volumenes de postsgresql
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: postgresql-data
+      # Volumenes de bacularis-api
+      - name: bacularis-api
         configMap:
-          name: bacula-dir
-      - name: bconsole
-        configMap:
-          name: bconsole
-      - name: bacula-dir-extra-conf
-        configMap:
-          name: bacula-dir-dummy-conf
-      - name: bacula-logs
-        emptyDir: {}
+          name: bacularis-api
 
 ---
 #-----------------------------------------------------------
@@ -462,9 +228,14 @@ spec:
   selector:
     app: bacula-dir
   ports:
+  - port: 9097
+    protocol: TCP
+    targetPort: 9097
+    name: api-port
   - port: 9101
     protocol: TCP
     targetPort: 9101
+    name: dir-port
 
 ---
 #-----------------------------------------------------------
