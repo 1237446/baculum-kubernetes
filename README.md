@@ -91,3 +91,125 @@ Finalmente, despliega la interfaz web de Baculum, que consiste en una API y el f
       baculum-api-5cb974c57-42sqm    1/1     Running   0          5m
       baculum-web-75f6cccbcb-5pw9t   1/1     Running   0          5m
       ```
+
+-----
+
+## 4\. Guía de Instalación del Agente Bacula (Windows File Daemon)
+
+Esta guía detalla el proceso para descargar, instalar y configurar el agente de cliente de Bacula en un entorno Windows.
+
+   ### Descarga del Software
+   
+   * **Acceda al sitio web oficial:** Diríjase al [Centro de Descargas de Bacula](https://www.bacula.org/binary-download-center/).
+     
+   *  **Seleccione el instalador:** Localice y descargue los binarios para Windows correspondientes a la versión **15.0.3** (asegúrese de elegir la arquitectura correcta, usualmente 64-bits).
+   
+   ![guia](pictures/agent-windows-0.png)
+   
+   ### Proceso de Instalación
+   
+   *  **Ejecutar el instalador:** Abra el archivo descargado en el equipo cliente Windows.
+
+   ![guia](/pictures/agent-windows-1.jpeg)
+     
+   *  **Acuerdo de Licencia:** Lea y acepte los términos de la licencia para continuar.
+
+   ![guia](/pictures/agent-windows-2.jpeg)
+     
+   *  **Tipo de Instalación:** Cuando se le solicite, seleccione el tipo de instalación **Custom** (Personalizada).
+
+   ![guia](/pictures/agent-windows-3.jpeg)
+     
+   *  **Selección de Componentes:**
+     
+       * Despliegue la lista de componentes.
+       
+       ![guia](/pictures/agent-windows-4.jpeg)
+       
+       * Asegúrese de marcar **Client -> File Service**.
+    
+   > [\!NOTE]
+   >  Esto instalará únicamente el servicio necesario para que el servidor Bacula pueda realizar copias de seguridad de este equipo.
+         
+   *  **Directorio de Instalación:** Seleccione la ruta donde se alojarán los archivos de Bacula o mantenga la ruta por defecto.
+
+       ![guia](/pictures/agent-windows-5.jpeg)
+    
+   *  **Configuración del Cliente (File Daemon):**
+
+       * **Nombre del Agente:** Ingrese un nombre único para identificar a este cliente en la red.
+       * **Contraseña:** Defina una contraseña segura.
+
+       ![guia](/pictures/agent-windows-6.jpeg)
+
+   > [!WARNING]
+   > Guarde el **Nombre del Agente** y la **Contraseña** en un lugar seguro. Estos datos son obligatorios para configurar posteriormente el archivo `bacula-dir.conf` en el servidor Director.
+     
+   *  **Configuración del Director y Monitor:**
+     
+       * **Nombre del Director:** Ingrese el nombre exacto del Director de Bacula que gestionará este cliente.
+     
+       * **Monitor:** Si va a utilizar un monitor de estado, defina su nombre y contraseña.
+    
+       ![guia](/pictures/agent-windows-7.jpeg)
+      
+   > [\!NOTE]
+   >  Al igual que en el paso anterior, registre estas credenciales, ya que deben coincidir exactamente con la configuración del servidor.
+       
+   *  **Finalización:** Haga clic en **Instalar**, espere a que la barra de progreso se complete y seleccione **Finalizar**.
+
+       ![guia](/pictures/agent-windows-8.jpeg)
+
+       ![guia](/pictures/agent-windows-9.jpeg)
+   
+   ### Configuración del Firewall de Windows (Entrada y Salida)
+
+   Para garantizar la comunicación bidireccional correcta con el servidor, configuraremos reglas tanto para el tráfico entrante como saliente.
+
+   > [\!NOTE]
+   > Otra alternativa para activar el firewall es usando el script ![**bacula.bat**](bacula.bat)
+   
+   *  **Abrir configuración:** Busque y abra "Windows Defender Firewall con seguridad avanzada".
+     
+   *  **Crear Regla de Entrada:**
+     
+       * En el panel izquierdo, seleccione **Reglas de entrada** (*Inbound Rules*).
+     
+       * En el panel derecho, haga clic en **Nueva regla...**
+        
+   *  **Tipo de Regla:** Seleccione la opción **Puerto**.
+
+       ![guia](/pictures/agent-windows-10.jpeg)
+     
+   *  **Protocolo y Puertos:**
+     
+       * Seleccione **TCP**.
+        
+       * En "Puertos locales específicos", ingrese el puerto estándar del agente: **9101-9103**.
+    
+         ![guia](/pictures/agent-windows-11.jpeg)
+        
+   *  **Acción:** Seleccione **Permitir la conexión**.
+
+         ![guia](/pictures/agent-windows-12.jpeg)
+     
+   *  **Perfil:** Marque todas las casillas que apliquen a su entorno (Dominio, Privado y Público) para asegurar la conectividad.
+
+         ![guia](/pictures/agent-windows-13.jpeg)
+     
+   *  **Nombre:** Asigne un nombre descriptivo a la regla, por ejemplo: `Bacula`.
+
+         ![guia](/pictures/agent-windows-14.jpeg)
+     
+   *  **Guardar:** Haga clic en Finalizar para activar la regla.
+
+   ### Verificación del Servicio
+   
+   Antes de dar por finalizada la instalación en el cliente, debemos confirmar que el agente se está ejecutando correctamente.
+
+   * Presione las teclas Windows + R, escriba services.msc y presione Enter.    
+   * En la lista de servicios, busque el llamado Bacula File Daemon.  
+   * Verifique la columna "Estado": debe decir En ejecución (Running).   
+   * Verifique la columna "Tipo de inicio": debe estar en Automático.  
+      * Si el servicio no está corriendo: Haga clic derecho sobre él y seleccione Iniciar.
+     
