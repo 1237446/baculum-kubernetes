@@ -110,21 +110,21 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
    
    *  **Ejecutar el instalador:** Abra el archivo descargado en el equipo cliente Windows.
 
-   ![guia](/pictures/agent-windows-1.jpeg)
+   ![guia](/pictures/agent-windows-1.png)
      
    *  **Acuerdo de Licencia:** Lea y acepte los términos de la licencia para continuar.
 
-   ![guia](/pictures/agent-windows-2.jpeg)
+   ![guia](/pictures/agent-windows-2.png)
      
    *  **Tipo de Instalación:** Cuando se le solicite, seleccione el tipo de instalación **Custom** (Personalizada).
 
-   ![guia](/pictures/agent-windows-3.jpeg)
+   ![guia](/pictures/agent-windows-3.png)
      
    *  **Selección de Componentes:**
      
        * Despliegue la lista de componentes.
        
-       ![guia](/pictures/agent-windows-4.jpeg)
+       ![guia](/pictures/agent-windows-4.png)
        
        * Asegúrese de marcar **Client -> File Service**.
     
@@ -133,14 +133,14 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
          
    *  **Directorio de Instalación:** Seleccione la ruta donde se alojarán los archivos de Bacula o mantenga la ruta por defecto.
 
-       ![guia](/pictures/agent-windows-5.jpeg)
+       ![guia](/pictures/agent-windows-5.png)
     
    *  **Configuración del Cliente (File Daemon):**
 
        * **Nombre del Agente:** Ingrese un nombre único para identificar a este cliente en la red.
        * **Contraseña:** Defina una contraseña segura.
 
-       ![guia](/pictures/agent-windows-6.jpeg)
+       ![guia](/pictures/agent-windows-6.png)
 
    > [!WARNING]
    > Guarde el **Nombre del Agente** y la **Contraseña** en un lugar seguro. Estos datos son obligatorios para configurar posteriormente el archivo `bacula-dir.conf` en el servidor Director.
@@ -151,16 +151,16 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
      
        * **Monitor:** Si va a utilizar un monitor de estado, defina su nombre y contraseña.
     
-       ![guia](/pictures/agent-windows-7.jpeg)
+       ![guia](/pictures/agent-windows-7.png)
       
    > [\!NOTE]
    >  Al igual que en el paso anterior, registre estas credenciales, ya que deben coincidir exactamente con la configuración del servidor.
        
    *  **Finalización:** Haga clic en **Instalar**, espere a que la barra de progreso se complete y seleccione **Finalizar**.
 
-       ![guia](/pictures/agent-windows-8.jpeg)
+       ![guia](/pictures/agent-windows-8.png)
 
-       ![guia](/pictures/agent-windows-9.jpeg)
+       ![guia](/pictures/agent-windows-9.png)
    
    ### Configuración del Firewall de Windows (Entrada y Salida)
 
@@ -179,7 +179,7 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
         
    *  **Tipo de Regla:** Seleccione la opción **Puerto**.
 
-       ![guia](/pictures/agent-windows-10.jpeg)
+       ![guia](/pictures/agent-windows-10.png)
      
    *  **Protocolo y Puertos:**
      
@@ -187,19 +187,19 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
         
        * En "Puertos locales específicos", ingrese el puerto estándar del agente: **9101-9103**.
     
-         ![guia](/pictures/agent-windows-11.jpeg)
+         ![guia](/pictures/agent-windows-11.png)
         
    *  **Acción:** Seleccione **Permitir la conexión**.
 
-         ![guia](/pictures/agent-windows-12.jpeg)
+         ![guia](/pictures/agent-windows-12.png)
      
    *  **Perfil:** Marque todas las casillas que apliquen a su entorno (Dominio, Privado y Público) para asegurar la conectividad.
 
-         ![guia](/pictures/agent-windows-13.jpeg)
+         ![guia](/pictures/agent-windows-13.png)
      
    *  **Nombre:** Asigne un nombre descriptivo a la regla, por ejemplo: `Bacula`.
 
-         ![guia](/pictures/agent-windows-14.jpeg)
+         ![guia](/pictures/agent-windows-14.png)
      
    *  **Guardar:** Haga clic en Finalizar para activar la regla.
 
