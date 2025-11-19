@@ -1,4 +1,4 @@
-# baculum-kubernetes
+# bacularis-kubernetes
 Instalacion de bacula con baculum en kubernetes
 
 > [\!TIP]
@@ -22,18 +22,10 @@ Utilizaremos el operador de CloudNativePG (CNPG) para gestionar nuestro clúster
       kubectl apply --server-side -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.27/releases/cnpg-1.27.1.yaml
       ```
 
-  * **Creamos los configmaps:**
-
-      ```bash
-      kubectl create configmap bacula-schema-grants --from-file=grants.sql=./postgresql/grant_postgresql_privileges.sql --namespace bacula
-
-      kubectl create configmap bacula-schema-tables --from-file=tables.sql=./postgresql/make_postgresql_tables.sql --namespace bacula
-      ```
-
   * **Despliega el clúster de Postgresql:**
   
       ```bash
-      kubectl apply -f postgresql.yaml -f postgresql-secrets.yaml
+      kubectl apply -f postgresql/postgresql.yaml -f postgresql/postgresql-secrets.yaml
       ```
   
   * **Verifica que los Pods del clúster estén listos:**
@@ -53,33 +45,132 @@ Utilizaremos el operador de CloudNativePG (CNPG) para gestionar nuestro clúster
 
 Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon y File Daemon).
 
-  * **Aplica los manifiestos de Bacula:**
+### Bacula-dir (Director Bacula)
+  * **Aplica los manifiestos de bacula-dir:**
   
       ```bash
-      kubectl apply -f bacula/
+      kubectl apply -f bacula/bacula-dir.yaml
       ```
-  
-  * **Verifica que los pods de Bacula estén en ejecución:**
+
+  * **Verifica que el pod de Bacula-dir estén en ejecución:**
   
       ```bash
       kubectl get pods -n bacula
       
       NAME                           READY   STATUS    RESTARTS   AGE
-      bacula-dir-bdc694575-8g5tq     1/1     Running   0          3m
-      bacula-fd-785ddf8674-kffsz     1/1     Running   0          3m
-      bacula-sd-76986d9f78-tpzz8     1/1     Running   0          3m
+      bacula-dir-bdc694575-8g5tq     1/1     Running   0          30s
+
+  * **Ingresa al Pod de Bacula-dir:**
+  
+      ```bash
+      kubectl exec -it -n bacula bacula-dir-bdc694575-8g5tq -- bash
       ```
+  
+  * **Instala un editor de texto (ej. nano) y edita el archivo de configuración:**
+  
+      ```bash
+      # Dentro del pod
+      apk add nano
+      nano /etc/bacula/bacula-dir.conf
+      ```
+
+  * **Añade las siguientes líneas** dentro del array de **Catalog**. Asegúrate de reemplazar las credenciales con las de tu base de datos.
+          
+      ```bash
+      ...
+      # Generic catalog service
+      Catalog {
+        Name = MyCatalog
+        dbdriver = "postgresql"
+        dbaddress = "postgresql-node-rw.bacula-test.svc.cluster.local"          
+        dbport = 5432
+        dbuser = "bacula"
+        dbpassword = "bacula"
+        dbname = "bacula"
+      }
+      
+      # Reasonable message delivery -- send most everything to email address
+      #  and to the console
+      Messages {
+        Name = Standard
+      #
+      ...
+      ```     
+      Guarda el archivo (`Ctrl+O`) y sal (`Ctrl+X`).
+    
+  * **Salimos del pod y ejecutamos el job de correccion:**
+    
+      ```bash
+      kubectl exec -it -n bacula bacula-dir-bdc694575-8g5tq -- bash
+      ```
+
+  * **Verifica que se haya completado:**
+    
+      ```bash      
+      NAME                               READY   STATUS      RESTARTS   AGE
+      bacula-catalog-initializer-279st   0/1     Completed   1          21s
+      ```
+       
+  * **Eliminamos el pod de Bacula-dir para reiniciar el servicio**
+  
+      ```bash
+      kubectl delete pods -n bacula bacula-dir-bdc694575-8g5tq
+      ```
+     
+  * **Verifica que el pod de Bacula-dir estén en ejecución:**
+  
+      ```bash
+      kubectl get pods -n bacula
+      
+      NAME                           READY   STATUS    RESTARTS   AGE
+      bacula-dir-bdc694575-v9b78     1/1     Running   0          15s
+
+### Bacula-SD (Storage Daemon Bacula)
+
+  * **Aplica los manifiestos de bacula-sd:**
+  
+      ```bash
+      kubectl apply -f bacula/bacula-sd.yaml
+      ```
+
+  * **Ingresa al Pod de Bacula-dir:**
+  
+      ```bash
+      kubectl exec -it -n bacula bacula-dir-bdc694575-v9b78 -- bash
+      ```
+  
+  * **Visualizamos el archivo de configuración, copiamos el nombre del director y contraseña:**
+  
+      ```bash
+      # Dentro del pod
+      cat /etc/bacula/bacula-dir.conf
+      ```
+
+      ```bash
+      ...
+      Director {
+        Name = build-3-22-x86_64-dir <--- CONTRASEÑA DE BACULA-DIR
+        DIRport = 9101
+        QueryFile = "/etc/bacula/scripts/query.sql"
+        WorkingDirectory = "/var/lib/bacula"
+        PidDirectory = "/run/bacula"
+        Maximum Concurrent Jobs = 20
+        Password = "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ" <--- CONTRASEÑA DE BACULA-DIR
+        Messages = Daemon
+      }
+      ...
+      ```    
 
 -----
 
-## 3\. Despliegue de Baculum (GUI)
+## 3\. Despliegue de Bacularis (GUI)
 
 Finalmente, despliega la interfaz web de Baculum, que consiste en una API y el frontend web.
 
   * **Aplica los manifiestos de Baculum:**
   
       ```bash
-      kubectl apply -f baculum/
+      kubectl apply -f bacularis/
       ```
   
   * **Verifica que los pods de Baculum estén listos:**
@@ -90,6 +181,12 @@ Finalmente, despliega la interfaz web de Baculum, que consiste en una API y el f
       NAME                           READY   STATUS    RESTARTS   AGE
       baculum-api-5cb974c57-42sqm    1/1     Running   0          5m
       baculum-web-75f6cccbcb-5pw9t   1/1     Running   0          5m
+      ```
+
+  * **Salimos del pod y ejecutamos el job de correccion:**
+    
+      ```bash
+      kubectl exec -it -n bacula bacula-dir-bdc694575-8g5tq -- bash
       ```
 
 -----
