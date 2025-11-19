@@ -20,7 +20,7 @@ data:
     redirect_uri = ""
     scope = ""
     protocol = "http"
-    address = "bacula-dir.bacula.svc.cluster.local"
+    address = "bacula-dir"
     port = "9097"
     url_prefix = ""
 
