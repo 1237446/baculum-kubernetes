@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------
-# Archivo de configuracion baculum-sd
+# Archivo de configuracion bacula-sd
 #---------------------------------------------------------------------
 apiVersion: v1
 kind: ConfigMap
@@ -19,28 +19,32 @@ data:
       Plugin Directory = "/opt/bacula/plugins"
       Maximum Concurrent Jobs = 20
     }
+
     #---------------------------------------------------------------------
     # Autorización de Directores
     #---------------------------------------------------------------------
     Director {
       Name = bacula-dir
-      Password = "TS8EQJ99iLFSK39oJy33YqkZ98v4ZapjRcA+j1N6ED1n"
+      Password = "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ"
     }
     Director {
       Name = bacula-mon
       Password = "5p+emSGBrRv7sdsOJjlXxOjIDIzvivTLzY8ywWCjz02x"
       Monitor = yes
     }
+
     #---------------------------------------------------------------------
     # Definición del Autochanger (Almacén de Disco)
     # Esto debe coincidir con el 'Device' en bacula-dir.conf
     #---------------------------------------------------------------------
     Autochanger {
       Name = FileChgr1
+      # Lista los dispositivos que maneja este "cambiador"
       Device = FileChgr1-Dev1, FileChgr1-Dev2
       Changer Command = ""
       Changer Device = /dev/null
     }
+
     #---------------------------------------------------------------------
     # Definición de Dispositivos (los "volúmenes" físicos)
     #---------------------------------------------------------------------
@@ -55,6 +59,7 @@ data:
       AlwaysOpen = no
       Maximum Concurrent Jobs = 5
     }
+
     Device {
       Name = FileChgr1-Dev2
       Media Type = File1
@@ -66,6 +71,7 @@ data:
       AlwaysOpen = no
       Maximum Concurrent Jobs = 5
     }
+
     #---------------------------------------------------------------------
     # Mensajes
     #---------------------------------------------------------------------
