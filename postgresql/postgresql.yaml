@@ -1,3 +1,6 @@
+#---------------------------------------------------------------------
+# PostgreSQL (Base de Datos)
+#---------------------------------------------------------------------
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -5,9 +8,7 @@ metadata:
   namespace: bacula
 spec:
   instances: 3
-  
-  imageName: ghcr.io/cloudnative-pg/postgresql:15
-
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
   primaryUpdateStrategy: unsupervised
 
   bootstrap:
@@ -17,29 +18,20 @@ spec:
       owner: bacula
       secret:
         name: postgresql-secrets
-      
       options:
         - '--encoding=SQL_ASCII'
         - '--lc-collate=C'
         - '--lc-ctype=C'
 
-      postInitApplicationSQLRefs:
-        configMapRefs:
-          - name: bacula-schema-tables
-            key: tables.sql
-          - name: bacula-schema-grants
-            key: grants.sql
-
   resources:
     requests:
-      memory: "1Gi"
-      cpu: "500m"
+      memory: "8Gi"
+      cpu: "4"
     limits:
-      memory: "2Gi"
-      cpu: "2000m"
+      memory: "8Gi"
+      cpu: "4"
 
   storage:
-    size: 50Gi
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
@@ -48,3 +40,45 @@ spec:
           storage: 50Gi
       storageClassName: ceph-block
       volumeMode: Filesystem
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      superuser_reserved_connections: "3"
+      shared_buffers: "2 GB"
+      work_mem: "32 MB"
+      maintenance_work_mem: "1 GB"
+      huge_pages: "try"
+      effective_cache_size: "6 GB"
+      effective_io_concurrency: "200"
+      random_page_cost: "1.25"
+      track_io_timing: "on"
+      track_functions: "pl"
+      wal_level: "replica"
+      max_wal_senders: "10"
+      synchronous_commit: "off"
+      checkpoint_timeout: "15 min"
+      checkpoint_completion_target: "0.9"
+      max_wal_size: "2 GB"
+      min_wal_size: "1024 MB"
+      wal_compression: "on"
+      wal_buffers: "-1"
+      wal_writer_delay: "200ms"
+      wal_writer_flush_after: "1MB"
+      wal_keep_size: "3650 MB"
+      bgwriter_delay: "200ms"
+      bgwriter_lru_maxpages: "100"
+      bgwriter_lru_multiplier: "2.0"
+      bgwriter_flush_after: "0"
+      max_worker_processes: "4"
+      max_parallel_workers_per_gather: "2"
+      max_parallel_maintenance_workers: "2"
+      max_parallel_workers: "4"
+      parallel_leader_participation: "on"
+      enable_partitionwise_join: "on"
+      enable_partitionwise_aggregate: "on"
+      jit: "on"
+      max_slot_wal_keep_size: "1000 MB"
+      track_wal_io_timing: "on"
+      maintenance_io_concurrency: "200"
+      wal_recycle: "on"
