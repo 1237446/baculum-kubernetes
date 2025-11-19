@@ -127,12 +127,6 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
 
 ### Bacula-SD (Storage Daemon Bacula)
 
-  * **Aplica los manifiestos de bacula-sd:**
-  
-      ```bash
-      kubectl apply -f bacula/bacula-sd.yaml
-      ```
-
   * **Ingresa al Pod de Bacula-dir:**
   
       ```bash
@@ -159,8 +153,46 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
         Messages = Daemon
       }
       ...
-      ```    
+      ```
+      
+  * **Salimos del pod y editamos el configmap:**
+    
+      ```bash
+      #---------------------------------------------------------------------
+      # Archivo de configuracion bacula-sd
+      #---------------------------------------------------------------------
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: bacula-sd
+        namespace: bacula
+      data:
+        bacula-sd.conf: |-
+      ...
+      #---------------------------------------------------------------------
+      # Autorización de Directores
+      #---------------------------------------------------------------------
+      Director {
+        Name = build-3-22-x86_64-dir <--- CONTRASEÑA DE BACULA-DIR
+        Password = "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ" <--- CONTRASEÑA DE BACULA-DIR
+      }
+      ...
+      ```
+      
+  * **Aplica los manifiestos de bacula-sd:**
+  
+      ```bash
+      kubectl apply -f bacula/bacula-sd.yaml
+      ```
 
+  * **Verifica que el pod de Bacula-sd estén en ejecución:**
+  
+      ```bash
+      kubectl get pods -n bacula
+      
+      NAME                           READY   STATUS    RESTARTS   AGE
+      bacula-sd-5bc6669584-c5f92     1/1     Running   0          30s
+      ```    
 -----
 
 ## 3\. Despliegue de Bacularis (GUI)
