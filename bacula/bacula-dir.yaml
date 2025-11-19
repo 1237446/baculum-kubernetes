@@ -18,8 +18,8 @@ data:
     type = "pgsql"
     name = "bacula"
     login = "bacula"
-    password = ""
-    ip_addr = "localhost"
+    password = "bacula"
+    ip_addr = "postgresql-node-rw"
     port = "5432"
     path = ""
 
@@ -64,7 +64,57 @@ data:
 
 ---
 #---------------------------------------------------------------------
-# ServiceAccount para Bacula-Director
+# ConfigMap para corregir entrypoint de Bacula
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-entrypoint-fix
+  namespace: bacula
+data:
+  docker-entrypoint.sh: |-
+    #!/usr/bin/env bash
+    
+    set -e
+    
+    # Cargar funciones auxiliares y de parada, ignorando fallos de ejecución si los hay
+    . /docker-entrypoint.inc || true
+
+    # 1. Función para omitir la inicialización del catálogo interno
+    function init_bacula() {
+        echo "Saltando inicialización de catálogo. Usando catálogo externo."
+    }
+
+    # 2. Redefinir la función para iniciar el Director de Bacula
+    # Esta función YA NO hace 'psql -l' porque eso está fallando sin el servidor interno.
+    function start_bacula_dir()
+    {
+        echo "Iniciando Director de Bacula (conectado a DB externa)..."
+        # Esto iniciará el servicio bacula-dir, el cual leerá el bacula-dir.conf
+        # y se conectará a 'postgresql-node-rw.bacula-test.svc.cluster.local'
+        /etc/bacula/scripts/bacula-ctl-dir start
+    }
+    
+    # 3. Redefinir la función START para omitir la DB interna (start_postgresql)
+    function start()
+    {
+        echo "PostgreSQL interno deshabilitado. Iniciando Director y API..."
+        
+        start_bacula_dir
+        
+        # 4. Iniciar PHP-FPM para Bacularis API
+        php-fpm84
+    }
+
+    # 5. Ejecutar el inicio de servicios
+    start
+    
+    # 6. Ejecutar el CMD original (nginx -g daemon off;)
+    exec "$@"
+
+---
+#---------------------------------------------------------------------
+# ServiceAccount para Bacula-dir
 #---------------------------------------------------------------------
 apiVersion: v1
 kind: ServiceAccount
@@ -77,30 +127,12 @@ metadata:
 
 ---
 #-----------------------------------------------------------
-# PersistentVolumeClaim para Nextcloud (apps)
+# PersistentVolumeClaim para Bacula-dir
 #-----------------------------------------------------------
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: bacula-dir-data
-  namespace: bacula
-spec:
-  storageClassName: ceph-filesystem
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
-
----
-#-----------------------------------------------------------
-# PersistentVolumeClaim para Nextcloud (apps)
-#-----------------------------------------------------------
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgresql-data
   namespace: bacula
 spec:
   storageClassName: ceph-filesystem
@@ -136,21 +168,21 @@ spec:
     spec:
       serviceAccountName: bacula-dir-sa
       terminationGracePeriodSeconds: 60
-      # -------------------------------------------------------
-      # INIT CONTAINER: Sincronización + Permisos de Ejecución
-      # -------------------------------------------------------
+      # -----------------------------------------------------------
+      # INIT CONTAINER: Sincronización + Permisos de Ejecución (+x)
+      # -----------------------------------------------------------
       initContainers:
       - name: init-bacula-config
         image: bacularis/bacularis-api-dir:5.8.0-alpine
         command: ["/bin/sh", "-c"]
         args:
           - |
-            echo "--- Iniciando reparación de permisos Bacula ---"
+            echo "=== Iniciando reparación de permisos Bacula ==="
             # 1. Asegurar directorios
-            mkdir -p /mnt/config/scripts         
+            mkdir -p /mnt/config/scripts
             # 2. Copiar scripts (Sobrescribir para reparar corruptos)
             echo "Copiando scripts desde la imagen..."
-            cp -Rfv /etc/bacula/scripts/* /mnt/config/scripts/           
+            cp -Rfv /etc/bacula/scripts/* /mnt/config/scripts/
             # 3. Copiar configuración base si falta
             if [ ! -f "/mnt/config/bacula-dir.conf" ]; then
                echo "Inicializando configuración base..."
@@ -164,7 +196,7 @@ spec:
             # B. Dar permisos totales (775) a todo para evitar 'Permission denied'
             # Esto asegura que los scripts tengan el bit (+x) activado
             chmod -R 775 /mnt/config
-            echo "--- Reparación completada. Listo para arrancar. ---"
+            echo "=== Reparación completada. Listo para arrancar. ==="
         volumeMounts:
           - name: bacula-dir-data
             mountPath: /mnt/config
@@ -182,12 +214,9 @@ spec:
             cpu: "2"
             memory: "2Gi"
         volumeMounts:
-        # Volumenes de bacula-dir.conf y bconsole.conf
+        # Volumenes de bacula-dir
         - name: bacula-dir-data
           mountPath: /etc/bacula/
-        # Volumenes de postsgresql
-        - name: postgresql-data
-          mountPath: /var/lib/postgresql/data
         # Volumenes de bacularis-api
         - name: bacularis-api
           mountPath: /var/www/bacularis/protected/vendor/bacularis/bacularis-api/API/Config/api.conf
@@ -198,19 +227,25 @@ spec:
         - name: bacularis-api
           mountPath: /var/www/bacularis/protected/vendor/bacularis/bacularis-common/Common/Working/basic.conf
           subPath: basic.conf
+        # Volumen de corrección de entrypoint
+        - name: entrypoint-fix
+          mountPath: /docker-entrypoint.sh
+          subPath: docker-entrypoint.sh
+          readOnly: true
       volumes:
       # Volumenes de bacula-dir 
       - name: bacula-dir-data
         persistentVolumeClaim:
           claimName: bacula-dir-data
-      # Volumenes de postsgresql
-      - name: postgresql-data
-        persistentVolumeClaim:
-          claimName: postgresql-data
       # Volumenes de bacularis-api
       - name: bacularis-api
         configMap:
           name: bacularis-api
+      # Volumen de corrección de entrypoint
+      - name: entrypoint-fix
+        configMap:
+          name: bacula-entrypoint-fix
+          defaultMode: 0755
 
 ---
 #-----------------------------------------------------------
