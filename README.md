@@ -82,7 +82,7 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
       Catalog {
         Name = MyCatalog
         dbdriver = "postgresql"
-        dbaddress = "postgresql-node-rw.bacula-test.svc.cluster.local"          
+        dbaddress = "postgresql-node-rw"          
         dbport = 5432
         dbuser = "bacula"
         dbpassword = "bacula"
@@ -199,27 +199,37 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
 
 Finalmente, despliega la interfaz web de Baculum, que consiste en una API y el frontend web.
 
-  * **Aplica los manifiestos de Baculum:**
+  * **Aplica los manifiestos de Bacularis:**
   
       ```bash
-      kubectl apply -f bacularis/
+      kubectl apply -f bacularis/bacularis-web.yaml
       ```
   
-  * **Verifica que los pods de Baculum estén listos:**
+  * **Verifica que los pods de Bacularis estén listos:**
   
       ```bash
       kubectl get pods -n bacula
       
-      NAME                           READY   STATUS    RESTARTS   AGE
-      baculum-api-5cb974c57-42sqm    1/1     Running   0          5m
-      baculum-web-75f6cccbcb-5pw9t   1/1     Running   0          5m
+      NAME                             READY   STATUS    RESTARTS   AGE
+      bacularis-web-744786cf5-dkbh7    1/1     Running   0          5m
       ```
+      
+### Acceso en el navegador web
 
-  * **Salimos del pod y ejecutamos el job de correccion:**
+  * **Verifica que los services de Bacularis:**
     
       ```bash
-      kubectl exec -it -n bacula bacula-dir-bdc694575-8g5tq -- bash
+      kubectl get svc -n bacula
+      
+      NAME                 TYPE           CLUSTER-IP      EXTERNAL-IP    PORT(S)                         AGE
+      bacula-dir           LoadBalancer   10.43.124.46    172.16.9.106   9097:31019/TCP,9101:31933/TCP   3h11m
+      bacula-sd            LoadBalancer   10.43.98.2      172.16.9.109   9103:31393/TCP                  26m
+      bacularis-web        LoadBalancer   10.43.196.167   172.16.9.108   9097:32430/TCP                  26m
       ```
+
+La interfaz web de Bacularis está disponible en http://172.16.9.108:9097, **admin** con usuario y contraseña predeterminados **admin**.
+
+   ![guia](pictures/bacularis-web-0.png)
 
 -----
 
