@@ -126,24 +126,17 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
       bacula-dir-bdc694575-v9b78     1/1     Running   0          15s
 
 ### Bacula-SD (Storage Daemon Bacula)
-
-  * **Ingresa al Pod de Bacula-dir:**
-  
-      ```bash
-      kubectl exec -it -n bacula bacula-dir-bdc694575-v9b78 -- bash
-      ```
   
   * **Visualizamos el archivo de configuración, copiamos el nombre del director y contraseña:**
   
       ```bash
-      # Dentro del pod
-      cat /etc/bacula/bacula-dir.conf
+      kubectl exec -it -n bacula bacula-dir-8f9f74fb4-btlhg -- cat /etc/bacula/bacula-dir.conf
       ```
 
       ```bash
       ...
       Director {
-        Name = build-3-22-x86_64-dir <--- CONTRASEÑA DE BACULA-DIR
+        Name = build-3-22-x86_64-dir <--- NOMBRE DE BACULA-DIR
         DIRport = 9101
         QueryFile = "/etc/bacula/scripts/query.sql"
         WorkingDirectory = "/var/lib/bacula"
@@ -158,23 +151,13 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
   * **Salimos del pod y editamos el configmap:**
     
       ```bash
-      #---------------------------------------------------------------------
-      # Archivo de configuracion bacula-sd
-      #---------------------------------------------------------------------
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: bacula-sd
-        namespace: bacula
-      data:
-        bacula-sd.conf: |-
-      ...
+      # Ejemplo de la sección a modificar en el ConfigMap bacula-sd:
       #---------------------------------------------------------------------
       # Autorización de Directores
       #---------------------------------------------------------------------
       Director {
-        Name = build-3-22-x86_64-dir <--- CONTRASEÑA DE BACULA-DIR
-        Password = "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ" <--- CONTRASEÑA DE BACULA-DIR
+        Name = [REEMPLAZAR_NOMBRE_DIRECTOR] # EJ: build-3-22-x86_64-dir
+        Password = "[REEMPLAZAR_PASSWORD_DIRECTOR]" # EJ: "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ"
       }
       ...
       ```
@@ -227,13 +210,63 @@ Finalmente, despliega la interfaz web de Baculum, que consiste en una API y el f
       bacularis-web        LoadBalancer   10.43.196.167   172.16.9.108   9097:32430/TCP                  26m
       ```
 
-La interfaz web de Bacularis está disponible en http://172.16.9.108:9097, **admin** con usuario y contraseña predeterminados **admin**.
+La interfaz web de Bacularis estará disponible en la dirección **EXTERNAL-IP** del servicio `bacularis-web` y el puerto **9097**, por ejemplo: `http://172.16.9.108:9097`.
+
+Las credenciales predeterminadas para iniciar sesión son **Usuario:** `admin` y **Contraseña:** `admin`.
 
    ![guia](pictures/bacularis-web-0.png)
 
 -----
 
-## 4\. Guía de Instalación del Agente Bacula (Windows File Daemon)
+## 4\. Configuracion de bacula mediante bacularis
+
+ahora se configurara los componentes de bacula para una administracion basica de agentes windows (10 y 11) y linux
+
+Una vez que accedas a la interfaz web, debes configurar los componentes principales de Bacula para la administración básica de clientes (agentes) Windows (10 y 11) y Linux.
+
+> [!TIP]
+> Antes de empezar, ve a **Bacula Director -> Main** para confirmar que los servicios de **Director** y **Storage Daemon** están en estado **RUNNING**.
+
+* ### **Storage (Almacenamiento)**
+  Verifica la configuración del Storage Daemon (`bacula-sd`) que desplegamos en Kubernetes (el Director ya debería tenerlo configurado por defecto al iniciarse).
+
+    * Ingresa a **Director** \> **Configure director** \> **Storage**. Añade un nuevo "Storage" y configura lo siguiente:
+  
+        * **Name:** `Storage-Local-Disco`
+        * **Description:** `bacula-sd`
+        * **Address:** `172.16.9.109`
+        * **Password:** `UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ"`
+        * **Device:** `FileChgr1`
+        * **MediaType:** `File1`   
+        * **Autochanger:** `File1`
+        * **MaximumConcurrentJobs:** `10`  
+  
+* ### **Pool (Piscina)**
+    * Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
+      
+    * Ingresa a **Director** \> **Configure director** \> **Pool**. Añade un nuevo "Pool", configura lo siguiente:
+  
+        * **Modo:** Demonio de ClamAV (Socket)
+        * **Host:** `clamav`
+        * **Puerto:** `3310`
+        * **Longitud de flujo:** `104857600`
+
+* ### **Clients (Clientes)**
+    * Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
+
+* ### **File Sets (Conjuntos de Archivos)**
+    * Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
+
+* ### **JobDefs (Plantillas de Trabajos)**
+    * Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
+
+* ### **Schedule (Horarios de Backup)**
+    * Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
+
+* ### **Jobs (Trabajos)**
+    * Une un **Cliente**, un **File Set**, un **Schedule** y un **JobDef** para crear un trabajo de copia de seguridad completo.
+
+## 5\. Guía de Instalación del Agente Bacula (Windows File Daemon)
 
 Esta guía detalla el proceso para descargar, instalar y configurar el agente de cliente de Bacula en un entorno Windows.
 
