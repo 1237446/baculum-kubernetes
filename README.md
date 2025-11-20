@@ -235,11 +235,15 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
         * **Name:** `Storage-Local-Disco`
         * **Description:** `bacula-sd`
         * **Address:** `172.16.9.109`
-        * **Password:** `UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ"`
+        * **Password:** `UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ`
         * **Device:** `FileChgr1`
         * **MediaType:** `File1`   
         * **Autochanger:** `File1`
-        * **MaximumConcurrentJobs:** `10`  
+        * **MaximumConcurrentJobs:** `10`
+     
+     ![guia](pictures/bacularis-storage-0.png)
+  
+     ![guia](pictures/bacularis-storage-1.png)
   
 * ### **Pool (Piscina)**
     * Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
