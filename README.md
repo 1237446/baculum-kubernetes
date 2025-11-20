@@ -245,8 +245,6 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
      
      ![guia](pictures/bacularis-storage-0.png)
   
-     ![guia](pictures/bacularis-storage-1.png)
-  
 * ### **Pool (Piscina)**
   Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
       
@@ -267,8 +265,6 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **AutoPrune:** `yes`
 
      ![guia](pictures/bacularis-pool-0.png)
-  
-     ![guia](pictures/bacularis-pool-1.png)
 
 * ### **File Sets (Conjuntos de Archivos)**
   Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
@@ -300,8 +296,6 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
              * **File:** `*/lost+found`
 
      ![guia](pictures/bacularis-fileset-0.png)
-  
-     ![guia](pictures/bacularis-fileset-1.png)
 
     * Para clientes Windows:
 
@@ -329,6 +323,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
              * **File:** `*/AppData/Local/Temp`
              * **File:** `pagefile.sys`
              * **File:** `hiberfil.sys`
+
+     ![guia](pictures/bacularis-fileset-1.png)
 
 * ### **Schedule (Horarios de Backup)**
   Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
@@ -416,14 +412,9 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **PruneFiles** `yes`
          * **CancelQueuedDuplicates** `yes`
 
-     ![guia](pictures/bacularis-jobdefs-1.png)
-  
+     ![guia](pictures/bacularis-jobdefs-1.png)      
 
-* ### **Clients (Clientes)**
-  Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
-
-* ### **JobDefs (Plantillas de Trabajos)**
-  Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
+-----
 
 ## 5\. Guía de Instalación del Agente Bacula (Windows File Daemon)
 
