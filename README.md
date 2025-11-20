@@ -283,8 +283,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
                 * **Signature:** "Sha256"
                 * **OneFS:** `yes`
                 * **Recurse:** `yes`
+                * **Sparse:** `yes`
                 * **NoAtime:** `yes`
-                * **CheckFileChanges:** `yes`
                 * **HardLinks:** `yes`
                 * **AclSupport:** `yes`
                 * **XattrSupport:** `yes`
@@ -296,16 +296,18 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
              * **File:** `/var/run`
              * **File:** `/var/cache`
              * **File:** `/tmp`
+             * **File:** `*.log`
+             * **File:** `*/lost+found`
 
      ![guia](pictures/bacularis-fileset-0.png)
   
      ![guia](pictures/bacularis-fileset-1.png)
 
-
     * Para clientes Windows:
 
          * **Name:** `FileSet-Windows-Server`
          * **Description:** `Archivos a respaldar en Windows`
+         * **EnableVss:** `yes`
          * **Include:**
              * **Options** (Add options block)
                 * **Compression:** "Gzip"
@@ -313,10 +315,10 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
                 * **OneFS:** `yes`
                 * **Recurse:** `yes`
                 * **NoAtime:** `yes`
-                * **CheckFileChanges:** `yes`
                 * **HardLinks:** `yes`
                 * **AclSupport:** `yes`
                 * **XattrSupport:** `yes`
+                * **IgnoreCase:** `yes`
              * **Options** (Add single file/directory)
                 * **File:** `C:/Users`
                 * **File:** `C:/inetpub`
@@ -324,15 +326,46 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
              * **File:** `*.tmp`
              * **File:** `*.bak`
              * **File:** `C:/Users/Public`
+             * **File:** `*/AppData/Local/Temp`
+             * **File:** `pagefile.sys`
+             * **File:** `hiberfil.sys`
+
+* ### **Schedule (Horarios de Backup)**
+  Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
+
+    * Ingresa a **Director** \> **Configure director** \> **Schedule**. Añade un nuevo "Schedule", configura lo siguiente para el clientes Linux:
+      
+         * **Name:** `Backup-Cycle`
+         * **Description:** `Respaldo diario`
+         * **Run#1:**
+             * **Monthly**
+                 * **Run at:** 23:05
+                 * **Weeks of the month:** first
+                 * **Days of the week:** Sunday
+             * **Level**: Full
+         * **Run#2:**
+             * **Monthly**
+                 * **Run at:** 23:05
+                 * **Weeks of the month:** second, third, fourth, fifth
+                 * **Days of the week:** Sunday
+             * **Level**: Differential
+         * **Run#3:**
+             * **Weekly**
+                 * **Run at:** 23:05
+                 * **Days of the week:** Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+             * **Level**: Incremental                          
+
+     ![guia](pictures/bacularis-schedule-0.png)
+  
+     ![guia](pictures/bacularis-schedule-1.png)
+  
+     ![guia](pictures/bacularis-schedule-2.png)
 
 * ### **Clients (Clientes)**
   Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
 
 * ### **JobDefs (Plantillas de Trabajos)**
   Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
-
-* ### **Schedule (Horarios de Backup)**
-  Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
 
 * ### **Jobs (Trabajos)**
   Une un **Cliente**, un **File Set**, un **Schedule** y un **JobDef** para crear un trabajo de copia de seguridad completo.
