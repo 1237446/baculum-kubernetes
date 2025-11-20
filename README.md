@@ -246,14 +246,25 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
      ![guia](pictures/bacularis-storage-1.png)
   
 * ### **Pool (Piscina)**
-    * Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
+  Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
       
     * Ingresa a **Director** \> **Configure director** \> **Pool**. Añade un nuevo "Pool", configura lo siguiente:
+
+         * **Name:** `Pool-Local`
+         * **PoolType:** `Backup`
+         * **LabelFormat:** `Vol-`
+         * **LabelType:** `Bacula`
+         * **Storage:** `Storage-Local-Disco`
+         * **Catalog:** `MyCatalog`
+         * **MaximumVolumes:** `100`
+         * **MaximumVolumeBytes:** `50GiB`
+         * **VolumeRetention:** `360 Days`
+         * **Recycle:** `yes`
+         * **AutoPrune:** `yes`
+
+     ![guia](pictures/bacularis-pool-0.png)
   
-        * **Modo:** Demonio de ClamAV (Socket)
-        * **Host:** `clamav`
-        * **Puerto:** `3310`
-        * **Longitud de flujo:** `104857600`
+     ![guia](pictures/bacularis-pool-1.png)
 
 * ### **Clients (Clientes)**
     * Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
