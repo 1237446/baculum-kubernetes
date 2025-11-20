@@ -236,6 +236,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
         * **Description:** `bacula-sd`
         * **Address:** `172.16.9.109`
         * **Password:** `UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ`
+        * **Enabled:** `yes`
+        * **AllowCompression:** `yes`
         * **Device:** `FileChgr1`
         * **MediaType:** `File1`   
         * **Autochanger:** `File1`
@@ -254,6 +256,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **PoolType:** `Backup`
          * **LabelFormat:** `Vol-`
          * **LabelType:** `Bacula`
+         * **UseCatalog:** `yes`
+         * **CatalogFiles:** `yes`
          * **Storage:** `Storage-Local-Disco`
          * **Catalog:** `MyCatalog`
          * **MaximumVolumes:** `100`
@@ -266,20 +270,45 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
   
      ![guia](pictures/bacularis-pool-1.png)
 
-* ### **Clients (Clientes)**
-    * Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
-
 * ### **File Sets (Conjuntos de Archivos)**
-    * Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
+  Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
+
+    * Ingresa a **Director** \> **Configure director** \> **FileSet**. Añade un nuevo "FileSet", configura lo siguiente:
+      
+         * **Name:** `FileSet-Linux-Server`
+         * **Description:** `Archivos a respaldar en Linux`
+         * **Include:**
+             * **Options** (Add options block)
+                * **Compression:** "Gzip"
+                * **Signature:** "Sha256"
+                * **OneFS:** `yes`
+                * **Recurse:** `yes`
+                * **NoAtime:** `yes`
+                * **CheckFileChanges:** `yes`
+                * **HardLinks:** `yes`
+                * **AclSupport:** `yes`
+                * **XattrSupport:** `yes`
+             * **Options** (Add single file/directory)
+                * **File:** `/home`
+                * **File:** `/etc`
+                * **File:** `/var/www`
+         * **Exclude:**
+             * **File:** `*.tmp`
+             * **File:** `*.bak`
+             * **File:** `C:/Users/Public`
+
+
+* ### **Clients (Clientes)**
+  Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
 
 * ### **JobDefs (Plantillas de Trabajos)**
-    * Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
+  Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
 
 * ### **Schedule (Horarios de Backup)**
-    * Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
+  Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
 
 * ### **Jobs (Trabajos)**
-    * Une un **Cliente**, un **File Set**, un **Schedule** y un **JobDef** para crear un trabajo de copia de seguridad completo.
+  Une un **Cliente**, un **File Set**, un **Schedule** y un **JobDef** para crear un trabajo de copia de seguridad completo.
 
 ## 5\. Guía de Instalación del Agente Bacula (Windows File Daemon)
 
