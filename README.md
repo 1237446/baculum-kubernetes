@@ -273,7 +273,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
 * ### **File Sets (Conjuntos de Archivos)**
   Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
 
-    * Ingresa a **Director** \> **Configure director** \> **FileSet**. Añade un nuevo "FileSet", configura lo siguiente:
+    * Ingresa a **Director** \> **Configure director** \> **FileSet**. Añade un nuevo "FileSet", configura lo siguiente para el clientes Linux:
       
          * **Name:** `FileSet-Linux-Server`
          * **Description:** `Archivos a respaldar en Linux`
@@ -293,10 +293,37 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
                 * **File:** `/etc`
                 * **File:** `/var/www`
          * **Exclude:**
+             * **File:** `/var/run`
+             * **File:** `/var/cache`
+             * **File:** `/tmp`
+
+     ![guia](pictures/bacularis-fileset-0.png)
+  
+     ![guia](pictures/bacularis-fileset-1.png)
+
+
+    * Para clientes Windows:
+
+         * **Name:** `FileSet-Windows-Server`
+         * **Description:** `Archivos a respaldar en Windows`
+         * **Include:**
+             * **Options** (Add options block)
+                * **Compression:** "Gzip"
+                * **Signature:** "Sha256"
+                * **OneFS:** `yes`
+                * **Recurse:** `yes`
+                * **NoAtime:** `yes`
+                * **CheckFileChanges:** `yes`
+                * **HardLinks:** `yes`
+                * **AclSupport:** `yes`
+                * **XattrSupport:** `yes`
+             * **Options** (Add single file/directory)
+                * **File:** `C:/Users`
+                * **File:** `C:/inetpub`
+         * **Exclude:**
              * **File:** `*.tmp`
              * **File:** `*.bak`
              * **File:** `C:/Users/Public`
-
 
 * ### **Clients (Clientes)**
   Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
