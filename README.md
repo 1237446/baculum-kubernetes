@@ -227,6 +227,10 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
 > [!TIP]
 > Antes de empezar, ve a **Bacula Director -> Main** para confirmar que los servicios de **Director** y **Storage Daemon** están en estado **RUNNING**.
 
+> [!WARNING]
+> Por motivos de seguridad, actualice la contraseña de la cuenta de Administrador antes de proceder con la configuración.
+> ![guia](pictures/bacularis-password-0.png)
+
 * ### **Storage (Almacenamiento)**
   Verifica la configuración del Storage Daemon (`bacula-sd`) que desplegamos en Kubernetes (el Director ya debería tenerlo configurado por defecto al iniciarse).
 
@@ -416,37 +420,39 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
 
 -----
 
-## 5\. Guía de Instalación del Agente Bacula (Windows File Daemon)
+## 5\. Guía de Instalación del Agente Bacula
+
+### Windows File Daemon
 
 Esta guía detalla el proceso para descargar, instalar y configurar el agente de cliente de Bacula en un entorno Windows.
 
-   ### Descarga del Software
+   #### Descarga del Software
    
    * **Acceda al sitio web oficial:** Diríjase al [Centro de Descargas de Bacula](https://www.bacula.org/binary-download-center/).
      
    *  **Seleccione el instalador:** Localice y descargue los binarios para Windows correspondientes a la versión **15.0.3** (asegúrese de elegir la arquitectura correcta, usualmente 64-bits).
    
-   ![guia](pictures/agent-windows-0.png)
+        ![guia](pictures/agent-windows-0.png)
    
-   ### Proceso de Instalación
+   #### Proceso de Instalación
    
    *  **Ejecutar el instalador:** Abra el archivo descargado en el equipo cliente Windows.
 
-   ![guia](/pictures/agent-windows-1.png)
+        ![guia](/pictures/agent-windows-1.png)
      
    *  **Acuerdo de Licencia:** Lea y acepte los términos de la licencia para continuar.
 
-   ![guia](/pictures/agent-windows-2.png)
+        ![guia](/pictures/agent-windows-2.png)
      
    *  **Tipo de Instalación:** Cuando se le solicite, seleccione el tipo de instalación **Custom** (Personalizada).
 
-   ![guia](/pictures/agent-windows-3.png)
+        ![guia](/pictures/agent-windows-3.png)
      
    *  **Selección de Componentes:**
      
        * Despliegue la lista de componentes.
        
-       ![guia](/pictures/agent-windows-4.png)
+         ![guia](/pictures/agent-windows-4.png)
        
        * Asegúrese de marcar **Client -> File Service**.
     
@@ -455,17 +461,17 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
          
    *  **Directorio de Instalación:** Seleccione la ruta donde se alojarán los archivos de Bacula o mantenga la ruta por defecto.
 
-       ![guia](/pictures/agent-windows-5.png)
+        ![guia](/pictures/agent-windows-5.png)
     
    *  **Configuración del Cliente (File Daemon):**
 
        * **Nombre del Agente:** Ingrese un nombre único para identificar a este cliente en la red.
        * **Contraseña:** Defina una contraseña segura.
 
-       ![guia](/pictures/agent-windows-6.png)
+           ![guia](/pictures/agent-windows-6.png)
 
    > [!WARNING]
-   > Guarde el **Nombre del Agente** y la **Contraseña** en un lugar seguro. Estos datos son obligatorios para configurar posteriormente el archivo `bacula-dir.conf` en el servidor Director.
+   > Guarde el **Nombre del Agente** y la **Contraseña** en un lugar seguro. Estos datos son obligatorios para configurar posteriormente el cliente en el servidor Bacularis.
      
    *  **Configuración del Director y Monitor:**
      
@@ -473,7 +479,7 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
      
        * **Monitor:** Si va a utilizar un monitor de estado, defina su nombre y contraseña.
     
-       ![guia](/pictures/agent-windows-7.png)
+           ![guia](/pictures/agent-windows-7.png)
       
    > [\!NOTE]
    >  Al igual que en el paso anterior, registre estas credenciales, ya que deben coincidir exactamente con la configuración del servidor.
@@ -484,7 +490,7 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
 
        ![guia](/pictures/agent-windows-9.png)
    
-   ### Configuración del Firewall de Windows (Entrada y Salida)
+   #### Configuración del Firewall de Windows (Entrada y Salida)
 
    Para garantizar la comunicación bidireccional correcta con el servidor, configuraremos reglas tanto para el tráfico entrante como saliente.
 
@@ -513,19 +519,19 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
         
    *  **Acción:** Seleccione **Permitir la conexión**.
 
-         ![guia](/pictures/agent-windows-12.png)
+        ![guia](/pictures/agent-windows-12.png)
      
    *  **Perfil:** Marque todas las casillas que apliquen a su entorno (Dominio, Privado y Público) para asegurar la conectividad.
 
-         ![guia](/pictures/agent-windows-13.png)
+        ![guia](/pictures/agent-windows-13.png)
      
    *  **Nombre:** Asigne un nombre descriptivo a la regla, por ejemplo: `Bacula`.
 
-         ![guia](/pictures/agent-windows-14.png)
+        ![guia](/pictures/agent-windows-14.png)
      
    *  **Guardar:** Haga clic en Finalizar para activar la regla.
 
-   ### Verificación del Servicio
+   #### Verificación del Servicio
    
    Antes de dar por finalizada la instalación en el cliente, debemos confirmar que el agente se está ejecutando correctamente.
 
@@ -534,4 +540,134 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
    * Verifique la columna "Estado": debe decir En ejecución (Running).   
    * Verifique la columna "Tipo de inicio": debe estar en Automático.  
       * Si el servicio no está corriendo: Haga clic derecho sobre él y seleccione Iniciar.
-     
+
+-----
+
+### Guía de Instalación del Agente Bacula (Linux File Daemon)
+
+Esta guía detalla el proceso para instalar, configurar y asegurar el agente de cliente de Bacula (File Daemon) en servidores Linux (**Debian/Ubuntu** y **RHEL/Rocky/CentOS**).
+
+#### Instalación del Software
+
+A diferencia de Windows, en Linux utilizaremos el gestor de paquetes del sistema.
+
+  * **Actualización de repositorios:**
+    Abra una terminal en el servidor cliente y actualice la lista de paquetes.
+
+    **Para Debian/Ubuntu:**
+
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    ```
+
+    **Para RHEL/Rocky/CentOS:**
+
+    ```bash
+    sudo dnf check-update
+    ```
+
+  * **Instalación del paquete:**
+    Ejecute el comando de instalación correspondiente a su distribución.
+
+    **Para Debian/Ubuntu:**
+
+    ```bash
+    sudo apt install bacula-fd -y
+    ```
+
+    **Para RHEL/Rocky/CentOS:**
+
+    ```bash
+    sudo dnf install bacula-client -y
+    ```
+
+#### Configuración del Cliente (File Daemon)
+
+Una vez instalado, debemos editar el archivo de configuración para definir las credenciales y el acceso del Director.
+
+  * **Editar el archivo de configuración:**
+    Utilice su editor de texto preferido (nano o vi) para abrir el archivo `bacula-fd.conf`.
+
+    ```bash
+    sudo nano /etc/bacula/bacula-fd.conf
+    ```
+    
+  * **Configurar la sección "FileDaemon" (El Cliente):**
+    Localice la sección `FileDaemon` al principio del archivo.
+
+      * **Name:** Asigne un nombre único a este cliente (ej. `linux-client-fd`).
+      * **FDport:** Asegúrese de que sea **9102**.
+      * **WorkingDirectory:** Generalmente `/var/lib/bacula`.
+
+  * **Configurar la sección "Director":**
+    Localice la sección `Director`. Aquí definimos quién tiene permiso para conectarse.
+
+      * **Name:** Ingrese el nombre exacto de su servidor Bacula Director (ej. `bacula-dir`).
+      * **Password:** Defina una contraseña segura y fuerte o deje la que se genere por defecto
+
+   > [!WARNING]
+   > Guarde el **Name** (del cliente) y la **Password** definida en la sección del Director en un lugar seguro. Estos datos deben ser idénticos a los que configurará en el recurso `Client` dentro de su servidor Bacula (Director).
+
+  * **Guardar y Salir:**
+    Guarde los cambios (`Ctrl+O` en nano) y salga del editor (`Ctrl+X`).
+
+  * **Reiniciar el Servicio:**
+    Cada vez que realice un cambio en el archivo de configuración `bacula-fd.conf`, es necesario reiniciar el servicio para aplicar los cambios.
+
+    ```bash
+    sudo systemctl restart bacula-fd
+    ```
+
+   > [!TIP]
+   > Antes de reiniciar, compruebe que no haya errores de escritura:
+   >  ```bash
+   >  sudo bacula-fd -t -c /etc/bacula/bacula-fd.conf
+   >  ```
+   > *(Si no muestra ningún mensaje de salida, la sintaxis es correcta).*
+
+  * **Verificar que reinició correctamente:**
+    Después del reinicio, confirme que el servicio sigue activo:
+    
+    ```bash
+    sudo systemctl status bacula-fd
+    ```
+
+  > [\!NOTE]
+  > Verifique que en la línea "Active" aparezca **active (running)** en color verde. Si aparece "failed", revise los logs con `journalctl -xeu bacula-fd`.
+
+#### Configuración del Firewall (Entrada)
+
+Es necesario permitir el tráfico en el puerto **9102** (TCP), que es el puerto de escucha por defecto del Agente (File Daemon).
+
+  * **Para sistemas con UFW (Ubuntu/Debian):**
+
+    ```bash
+    sudo ufw allow 9101:9103/tcp
+    sudo ufw reload
+    ```
+
+  * **Para sistemas con Firewalld (RHEL/Rocky/CentOS):**
+
+    ```bash
+    sudo firewall-cmd --permanent --add-port=9101-9103/tcp
+    sudo firewall-cmd --reload
+    ```
+
+#### Verificación y Arranque del Servicio
+
+Finalmente, habilitaremos el servicio para que inicie automáticamente con el sistema y lo arrancaremos.
+
+  * **Iniciar y Habilitar el servicio:**
+
+    ```bash
+    sudo systemctl enable --now bacula-fd
+    ```
+
+  * **Prueba de conexión local (Opcional):**
+    Puede verificar si el puerto está escuchando correctamente:
+
+    ```bash
+    ss -tuln | grep 9102
+    ```
+
+    *(Debería ver una línea indicando `LISTEN` en el puerto 9102).*
