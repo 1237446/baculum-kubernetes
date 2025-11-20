@@ -333,7 +333,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
 * ### **Schedule (Horarios de Backup)**
   Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
 
-    * Ingresa a **Director** \> **Configure director** \> **Schedule**. Añade un nuevo "Schedule", configura lo siguiente para el clientes Linux:
+    * Ingresa a **Director** \> **Configure director** \> **Schedule**. Añade un nuevo "Schedule", configura lo siguiente:
       
          * **Name:** `Backup-Cycle`
          * **Description:** `Respaldo diario`
@@ -361,14 +361,69 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
   
      ![guia](pictures/bacularis-schedule-2.png)
 
+* ### **JobDefs (Plantillas de Trabajos)**
+  Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
+
+    * Ingresa a **Director** \> **Configure director** \> **JobDefs**. Añade un nuevo "JobDefs", configura lo siguiente para el clientes Linux
+
+         * **Name:** `JobDefs-Plantilla-Linux`
+         * **Description:** `Plantilla para clientes linux`
+         * **Type:** `Backup`
+         * **Fileset:** `FileSet-Linux-Server`
+         * **Pool:** `Pool-Local`
+         * **Storage:** `yes`
+         * **CatalogFiles:** `yes`
+         * **Storage:** `Storage-Local-Disco`
+         * **Messages:** `Standard`
+         * **Schedule:** `Backup-Cycle`
+         * **WriteBootstrap:** `/var/lib/bacula/%c.bsr`
+         * **ReRunFailedLevels** `yes`
+         * **PreferMountedVolumes** `yes`
+         * **RescheduleIncompleteJobs** `yes`
+         * **WritePartAfterJob** `yes`
+         * **AllowIncompleteJobs** `yes`
+         * **RescheduleTimes** `3`
+         * **MaxStartDelay** `12`
+         * **MaxStartDelay** `23`
+         * **PruneJobs** `yes`
+         * **PruneFiles** `yes`
+         * **CancelQueuedDuplicates** `yes`
+
+     ![guia](pictures/bacularis-jobdefs-0.png)
+
+    * Para clientes Windows:
+
+         * **Name:** `JobDefs-Plantilla-Windows`
+         * **Description:** `Plantilla para clientes Windows`
+         * **Type:** `Backup`
+         * **Fileset:** `FileSet-Windows-Server`
+         * **Pool:** `Pool-Local`
+         * **Storage:** `yes`
+         * **CatalogFiles:** `yes`
+         * **Storage:** `Storage-Local-Disco`
+         * **Messages:** `Standard`
+         * **Schedule:** `Backup-Cycle`
+         * **WriteBootstrap:** `/var/lib/bacula/%c.bsr`
+         * **ReRunFailedLevels** `yes`
+         * **PreferMountedVolumes** `yes`
+         * **RescheduleIncompleteJobs** `yes`
+         * **WritePartAfterJob** `yes`
+         * **AllowIncompleteJobs** `yes`
+         * **RescheduleTimes** `3`
+         * **MaxStartDelay** `12`
+         * **MaxStartDelay** `23`
+         * **PruneJobs** `yes`
+         * **PruneFiles** `yes`
+         * **CancelQueuedDuplicates** `yes`
+
+     ![guia](pictures/bacularis-jobdefs-1.png)
+  
+
 * ### **Clients (Clientes)**
   Define cada máquina cliente (servidor o estación de trabajo) que deseas respaldar. Necesitarás el **Nombre del Cliente** y la **Contraseña** configurados en el File Daemon de cada agente.
 
 * ### **JobDefs (Plantillas de Trabajos)**
   Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
-
-* ### **Jobs (Trabajos)**
-  Une un **Cliente**, un **File Set**, un **Schedule** y un **JobDef** para crear un trabajo de copia de seguridad completo.
 
 ## 5\. Guía de Instalación del Agente Bacula (Windows File Daemon)
 
