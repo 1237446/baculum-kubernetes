@@ -280,7 +280,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **Description:** `Archivos a respaldar en Linux`
          * **Include:**
              * **Options** (Add options block)
-                * **Compression:** "Gzip"
+                * **Compression:** "STD1"
                 * **Signature:** "Sha256"
                 * **OneFS:** `yes`
                 * **Recurse:** `yes`
@@ -309,7 +309,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **EnableVss:** `yes`
          * **Include:**
              * **Options** (Add options block)
-                * **Compression:** "Gzip"
+                * **Compression:** "ZSTD1"
                 * **Signature:** "Sha256"
                 * **OneFS:** `yes`
                 * **Recurse:** `yes`
@@ -548,7 +548,7 @@ Esta guía detalla el proceso para descargar, instalar y configurar el agente de
 
 Esta guía detalla el proceso para instalar, configurar y asegurar el agente de cliente de Bacula (File Daemon) en servidores Linux (**Debian/Ubuntu** y **RHEL/Rocky/CentOS**).
 
-#### Instalación del Software
+#### Instalación del Agente
 
 A diferencia de Windows, en Linux utilizaremos el gestor de paquetes del sistema.
 
@@ -672,3 +672,57 @@ Finalmente, habilitaremos el servicio para que inicie automáticamente con el si
     ```
 
     *(Debería ver una línea indicando `LISTEN` en el puerto 9102).*
+
+#### Configuración en Bacularis
+
+Ahora sí, vamos a la interfaz web para decirle a Bacula que ese cliente existe.
+
+1.  **Acceder a la sección de Recursos:**
+
+      * Inicia sesión en Bacularis.
+      * En el menú de la izquierda (o superior, dependiendo de tu tema), ve a **"Configuration" (Configuración)** (icono de engranaje o llave inglesa).
+      * Selecciona **"Director"**.
+      * Busca la pestaña o sección llamada **"Resources" (Recursos)**.
+
+2.  **Agregar Nuevo Cliente:**
+
+      * En la lista de tipos de recursos, selecciona **"Client"**.
+      * Haz clic en el botón **"Add" (Agregar)** o el signo **"+"**.
+
+3.  **Llenar los datos del Cliente:**
+    Aparecerá un formulario. Los campos obligatorios son:
+
+      * **Name:** El nombre que le darás al cliente en Bacula (Ej: `ServidorWeb-fd`).
+      * **Address:** La dirección IP o el nombre de dominio (DNS) del equipo cliente.
+      * **Password:** Aquí debes pegar **exactamente** la misma contraseña que pusiste en la Fase 1 (`bacula-fd.conf`).
+      * **Catalog:** Selecciona tu catálogo (usualmente `MyCatalog`).
+      * **File Retention / Job Retention:** Define cuánto tiempo guardarás el historial (ej. `30 days`).
+
+4.  **Guardar cambios:**
+
+      * Haz clic en **Save**.
+      * Bacularis te avisará que hay cambios pendientes. Busca el botón o notificación para **"Apply changes" (Aplicar cambios)** o **"Reload Director"**. *Esto es crucial; si no recargas, Bacula no se entera.*
+
+-----
+
+### Fase 3: Verificar la conexión
+
+Para asegurarte de que Bacularis puede "ver" al nuevo cliente:
+
+1.  Ve a la vista principal (Dashboard) o a la consola de Bacularis.
+2.  Busca la opción para ejecutar comandos de consola (`bconsole`).
+3.  Escribe el comando:
+    ```bash
+    status client=NombreDeTuCliente-fd
+    ```
+4.  **Resultado esperado:** Debería mostrarte un resumen que dice "Running Jobs..." o "Terminated Jobs...".
+      * **Si sale error:** Revisa que la contraseña coincida y que el puerto 9102 no esté bloqueado por un firewall entre el servidor Bacula y el cliente.
+
+-----
+
+### Resumen visual de la relación
+
+Bacularis escribe en `bacula-dir.conf` $\leftrightarrow$ Red (Puerto 9102) $\leftrightarrow$ Cliente (`bacula-fd.conf`)
+
+**¿Te gustaría que te explique cómo crear un "Job" (tarea de respaldo) específico para este nuevo cliente ahora que ya está conectado?**
+
