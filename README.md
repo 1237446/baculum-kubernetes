@@ -237,14 +237,15 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
     * Ingresa a **Director** \> **Configure director** \> **Storage**. Añade un nuevo "Storage" y configura lo siguiente:
   
         * **Name:** `Storage-Local-Disco`
-        * **Description:** `bacula-sd`
+        * **Description:** `PVC de almacenamiento local`
         * **Address:** `172.16.9.109`
         * **Password:** `UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ`
+        * **FdStorageAddress:** `172.16.9.109`
         * **Enabled:** `yes`
         * **AllowCompression:** `yes`
         * **Device:** `FileChgr1`
         * **MediaType:** `File1`   
-        * **Autochanger:** `File1`
+        * **Autochanger:** `yes`
         * **MaximumConcurrentJobs:** `10`
      
      ![guia](pictures/bacularis-storage-0.png)
