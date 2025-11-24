@@ -677,35 +677,27 @@ Finalmente, habilitaremos el servicio para que inicie automáticamente con el si
 
 Ahora sí, vamos a la interfaz web para decirle a Bacula que ese cliente existe.
 
-1.  **Acceder a la sección de Recursos:**
+  * **Acceder a la sección de Recursos:**
+    Ingresa a **Cliente** y añade un nuevo "Cliente", configura lo siguiente:
 
-      * Inicia sesión en Bacularis.
-      * En el menú de la izquierda (o superior, dependiendo de tu tema), ve a **"Configuration" (Configuración)** (icono de engranaje o llave inglesa).
-      * Selecciona **"Director"**.
-      * Busca la pestaña o sección llamada **"Resources" (Recursos)**.
+      * **Name:** `Client-fd`
+      * **Address:** `192.168.1.20`
+      * **Password:** Aquí debes pegar **exactamente** la misma contraseña que pusiste en el agente.
+      * **Catalog:** `MyCatalog`
 
-2.  **Agregar Nuevo Cliente:**
-
-      * En la lista de tipos de recursos, selecciona **"Client"**.
-      * Haz clic en el botón **"Add" (Agregar)** o el signo **"+"**.
-
-3.  **Llenar los datos del Cliente:**
-    Aparecerá un formulario. Los campos obligatorios son:
-
-      * **Name:** El nombre que le darás al cliente en Bacula (Ej: `ServidorWeb-fd`).
-      * **Address:** La dirección IP o el nombre de dominio (DNS) del equipo cliente.
-      * **Password:** Aquí debes pegar **exactamente** la misma contraseña que pusiste en la Fase 1 (`bacula-fd.conf`).
-      * **Catalog:** Selecciona tu catálogo (usualmente `MyCatalog`).
-      * **File Retention / Job Retention:** Define cuánto tiempo guardarás el historial (ej. `30 days`).
-
-4.  **Guardar cambios:**
-
-      * Haz clic en **Save**.
-      * Bacularis te avisará que hay cambios pendientes. Busca el botón o notificación para **"Apply changes" (Aplicar cambios)** o **"Reload Director"**. *Esto es crucial; si no recargas, Bacula no se entera.*
+  * Haz clic en **Save**.
 
 -----
 
-### Fase 3: Verificar la conexión
+#### Creamos el job del Cliente
+
+Define el trabajo que se ejecutara para la realizacion de copias de seguridad.
+
+   * Ingresa a **Jobs** \> **Jobs**. Añade un nuevo "Job", configura lo siguiente, configura lo siguiente para el clientes Linux:
+
+      * **Name:** `Client-fd`
+      * **JobsDefs:** `JobDefs-Plantilla-Windows`
+      * **Client:** `Client-fd`
 
 Para asegurarte de que Bacularis puede "ver" al nuevo cliente:
 
