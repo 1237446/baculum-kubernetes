@@ -101,7 +101,7 @@ Ahora, despliega los componentes principales de Bacula (Director, Storage Daemon
   * **Salimos del pod y ejecutamos el job de correccion:**
     
       ```bash
-      kubectl exec -it -n bacula bacula-dir-bdc694575-8g5tq -- bash
+      kubectl apply -f bacula/post-bacula-dir.yaml
       ```
 
   * **Verifica que se haya completado:**
@@ -249,6 +249,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
         * **MaximumConcurrentJobs:** `10`
      
      ![guia](pictures/bacularis-storage-0.png)
+
+    * Haz clic en **Save**.
   
 * ### **Pool (Piscina)**
   Define el conjunto de volúmenes donde se almacenarán los datos de las copias de seguridad (ej. `DefaultPool`).
@@ -270,6 +272,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **AutoPrune:** `yes`
 
      ![guia](pictures/bacularis-pool-0.png)
+
+    * Haz clic en **Save**.
 
 * ### **File Sets (Conjuntos de Archivos)**
   Define qué directorios o archivos específicos quieres incluir o excluir en la copia de seguridad para un cliente.
@@ -302,6 +306,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
 
      ![guia](pictures/bacularis-fileset-0.png)
 
+    * Haz clic en **Save**.
+
     * Para clientes Windows:
 
          * **Name:** `FileSet-Windows-Server`
@@ -330,6 +336,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
              * **File:** `hiberfil.sys`
 
      ![guia](pictures/bacularis-fileset-1.png)
+
+  * Haz clic en **Save**.
 
 * ### **Schedule (Horarios de Backup)**
   Define cuándo se ejecutarán las copias de seguridad (ej. Diariamente a las 02:00 AM).
@@ -362,6 +370,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
   
      ![guia](pictures/bacularis-schedule-2.png)
 
+    * Haz clic en **Save**.
+
 * ### **JobDefs (Plantillas de Trabajos)**
   Define plantillas con configuraciones comunes (Pool, FileSet, Schedule) para reutilizarlas en múltiples trabajos.
 
@@ -389,6 +399,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **PruneJobs** `yes`
          * **PruneFiles** `yes`
          * **CancelQueuedDuplicates** `yes`
+         * 
+    * Haz clic en **Save**.
 
      ![guia](pictures/bacularis-jobdefs-0.png)
 
@@ -418,6 +430,8 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
          * **CancelQueuedDuplicates** `yes`
 
      ![guia](pictures/bacularis-jobdefs-1.png)      
+
+   *  Haz clic en **Save**.
 
 -----
 
@@ -685,7 +699,11 @@ Ahora sí, vamos a la interfaz web para decirle a Bacula que ese cliente existe.
       * **Password:** Aquí debes pegar **exactamente** la misma contraseña que pusiste en el agente.
       * **Catalog:** `MyCatalog`
 
+        ![guia](/pictures/bacularis-client-0.png)
+
   * Haz clic en **Save**.
+
+    
 
 -----
 
@@ -698,6 +716,10 @@ Define el trabajo que se ejecutara para la realizacion de copias de seguridad.
       * **Name:** `Client-fd`
       * **JobsDefs:** `JobDefs-Plantilla-Windows`
       * **Client:** `Client-fd`
+
+        ![guia](/pictures/bacularis-jobs-0.png)
+
+  * Haz clic en **Save**.
 
 Para asegurarte de que Bacularis puede "ver" al nuevo cliente:
 
