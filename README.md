@@ -694,8 +694,8 @@ Ahora sí, vamos a la interfaz web para decirle a Bacula que ese cliente existe.
   * **Acceder a la sección de Recursos:**
     Ingresa a **Cliente** y añade un nuevo "Cliente", configura lo siguiente:
 
-      * **Name:** `Client-fd`
-      * **Address:** `192.168.1.20`
+      * **Name:** `Linux-agent-fd`
+      * **Address:** `172.16.8.208`
       * **Password:** Aquí debes pegar **exactamente** la misma contraseña que pusiste en el agente.
       * **Catalog:** `MyCatalog`
 
@@ -703,40 +703,41 @@ Ahora sí, vamos a la interfaz web para decirle a Bacula que ese cliente existe.
 
   * Haz clic en **Save**.
 
-    
-
------
-
 #### Creamos el job del Cliente
 
 Define el trabajo que se ejecutara para la realizacion de copias de seguridad.
 
-   * Ingresa a **Jobs** \> **Jobs**. Añade un nuevo "Job", configura lo siguiente, configura lo siguiente para el clientes Linux:
+   * Ingresa a **Jobs** \> **Jobs**. Añade un nuevo "Job", configura lo siguiente, configura lo siguiente:
 
-      * **Name:** `Client-fd`
+      * **Name:** `Linux-agent-fd`
       * **JobsDefs:** `JobDefs-Plantilla-Windows`
-      * **Client:** `Client-fd`
+      * **Client:** `Linux-agent-fd`
 
-        ![guia](/pictures/bacularis-jobs-0.png)
+        ![guia](/pictures/bacularis-job-0.png)
 
   * Haz clic en **Save**.
 
-Para asegurarte de que Bacularis puede "ver" al nuevo cliente:
+#### Ejecución del Trabajo de Respaldo
 
-1.  Ve a la vista principal (Dashboard) o a la consola de Bacularis.
-2.  Busca la opción para ejecutar comandos de consola (`bconsole`).
-3.  Escribe el comando:
-    ```bash
-    status client=NombreDeTuCliente-fd
-    ```
-4.  **Resultado esperado:** Debería mostrarte un resumen que dice "Running Jobs..." o "Terminated Jobs...".
-      * **Si sale error:** Revisa que la contraseña coincida y que el puerto 9102 no esté bloqueado por un firewall entre el servidor Bacula y el cliente.
+Para iniciar la acción de respaldo para el cliente asociado al trabajo (Job) previamente configurado.
 
------
+  *  Navega a la interfaz de **Jobs** y selecciona **Jobs**.
+  *  Localiza el trabajo (Job) de respaldo que creaste para el cliente.
+  *  Ejecuta el trabajo seleccionando la opción **"run job"**.
 
-### Resumen visual de la relación
+#### Verificación del Resultado
 
-Bacularis escribe en `bacula-dir.conf` $\leftrightarrow$ Red (Puerto 9102) $\leftrightarrow$ Cliente (`bacula-fd.conf`)
+El **resultado esperado** al ejecutar la acción es que el sistema muestre un resumen del estado del trabajo:
 
-**¿Te gustaría que te explique cómo crear un "Job" (tarea de respaldo) específico para este nuevo cliente ahora que ya está conectado?**
+* **Job en curso:** Debería aparecer un mensaje indicando **"Running Jobs..."** (Trabajos en ejecución).
+* **Job finalizado:** Debería mostrarse un mensaje indicando **"Terminated Jobs..."** (Trabajos finalizados) si el proceso ha concluido.
+
+![guia](/pictures/bacularis-job-1.png)
+
+#### Solución de Problemas (Troubleshooting)
+
+Si la ejecución del trabajo resulta en un **error**, revisa los siguientes puntos críticos:
+
+* **Credenciales:** Verifica que la **contraseña** configurada en el cliente y en el servidor **coincidan** exactamente.
+* **Conectividad:** Asegúrate de que el **puerto 9102** no esté bloqueado por un **firewall** entre el servidor Bacula (Director) y el cliente (File Daemon).
 
