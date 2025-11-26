@@ -293,7 +293,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
                 * **HardLinks:** `yes`
                 * **AclSupport:** `yes`
                 * **XattrSupport:** `yes`
-             * **Options** (Add single file/directory)
+             * **file/directory**
                 * **File:** `/home`
                 * **File:** `/etc`
                 * **File:** `/var/www`
@@ -324,7 +324,7 @@ Una vez que accedas a la interfaz web, debes configurar los componentes principa
                 * **AclSupport:** `yes`
                 * **XattrSupport:** `yes`
                 * **IgnoreCase:** `yes`
-             * **Options** (Add single file/directory)
+             * **file/directory**
                 * **File:** `C:/Users`
                 * **File:** `C:/inetpub`
          * **Exclude:**
