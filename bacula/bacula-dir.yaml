@@ -206,13 +206,16 @@ spec:
         ports:
         - containerPort: 9097
         - containerPort: 9101
+        env:
+        - name: TZ
+          value: "America/Lima"
         resources:
           requests:
-            cpu: "0.5"
-            memory: "512Mi"
-          limits:
-            cpu: "2"
+            cpu: "1"
             memory: "2Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
         volumeMounts:
         # Volumenes de bacula-dir
         - name: bacula-dir-data

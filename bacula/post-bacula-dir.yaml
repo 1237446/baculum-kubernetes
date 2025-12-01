@@ -1,0 +1,116 @@
+#---------------------------------------------------------------------
+# Archivo de configuracion inicializador del catalogo de Bacula
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-db-initializer-script
+  namespace: bacula
+data:
+  init-catalog.sh: |-
+    #!/usr/bin/env bash
+    set -e
+
+    DB_HOST="${DB_HOST}"
+    DB_USER="${DB_USER}"
+    DB_PASS="${DB_PASS}"
+    DB_NAME="${DB_NAME}"
+    DB_PORT="${DB_PORT}"
+    
+    # 2. Configurar variables de entorno para psql (cliente de PostgreSQL)
+    export PGPASSWORD="${DB_PASS}"
+    export PGHOST="${DB_HOST}"
+    export PGUSER="${DB_USER}"
+    export PGDATABASE="${DB_NAME}"
+    export PGPORT="${DB_PORT}"
+
+    # 3. Intentar verificar si la tabla 'Version' ya existe.
+    # Si la consulta tiene éxito, el catálogo ya existe y salimos.
+    psql -c "SELECT versionid FROM version" 2>/dev/null && {
+        echo "Catálogo de Bacula ya existe. Saliendo del inicializador."
+        exit 0
+    }
+    
+    # 4. Si la tabla no existe (falló el paso anterior), crear el Catálogo.
+    echo "Catálogo de Bacula no encontrado. Creando tablas..."
+    
+    # Reemplazamos la llamada al script local que fallaba con el socket
+    # Ejecutamos el script de creación de tablas con la conexión remota forzada por las variables PG*
+    /etc/bacula/scripts/make_postgresql_tables -c /etc/bacula/bacula-dir.conf
+    
+    echo "Inicialización del Catálogo completada."
+
+---
+#---------------------------------------------------------------------
+# Service Account y Secret para la DB externa (Opcional, pero recomendado)
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bacula-db-creds
+  namespace: bacula
+type: Opaque
+data:
+  db-password: YmFjdWxh
+
+---
+#---------------------------------------------------------------------
+# Job para inicializar el catalogo de Bacula en la DB externa
+#---------------------------------------------------------------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bacula-catalog-initializer
+  namespace: bacula
+spec:
+  # Deshabilita el auto-reintento en caso de fallo crítico de la DB
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers: # <-- ¡AÑADIR ESTO!
+      - name: wait-for-db
+        # Usa una imagen que ya contenga 'wait-for-it' o una herramienta de espera
+        image: busybox:stable # Imagen base ligera que suele tener nc
+        command: ['sh', '-c', 'nc -zvw3 postgresql-node-rw 5432']
+        env:
+        - name: DB_HOST
+          value: "postgresql-node-rw"
+        - name: DB_PORT
+          value: "5432"
+      containers:
+      - name: db-initializer
+        # Usar la misma imagen que el Director
+        image: bacularis/bacularis-api-dir:5.8.0-alpine
+        command: ["/bin/bash", "/init/init-catalog.sh"]
+        env:
+        - name: DB_HOST
+          value: "postgresql-node-rw"
+        - name: DB_USER
+          value: "bacula"
+        - name: DB_NAME
+          value: "bacula"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: bacula-db-creds
+              key: db-password
+        - name: TZ
+          value: "America/Lima"
+        volumeMounts:
+        - name: init-script
+          mountPath: /init
+        # Montar el bacula-dir.conf para que el script lo use
+        - name: bacula-dir-data 
+          mountPath: /etc/bacula/
+      volumes:
+      - name: init-script
+        configMap:
+          name: bacula-db-initializer-script
+          defaultMode: 0744
+      # Reutiliza el PVC de Bacula-dir si necesitas el bacula-dir.conf
+      - name: bacula-dir-data 
+        persistentVolumeClaim:
+          claimName: bacula-dir-data

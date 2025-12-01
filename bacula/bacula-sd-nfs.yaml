@@ -1,0 +1,175 @@
+#---------------------------------------------------------------------
+# Archivo de configuracion bacula-sd
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacula-sd-nfs
+  namespace: bacula
+data:
+  bacula-sd.conf: |-
+    #---------------------------------------------------------------------
+    # Definición del Storage Daemon (este propio almacén)
+    #---------------------------------------------------------------------
+    Storage {
+      Name = bacula-sd-nfs
+      SDPort = 9103
+      WorkingDirectory = "/opt/bacula/working"
+      Pid Directory = "/opt/bacula/working"
+      Plugin Directory = "/opt/bacula/plugins"
+      Maximum Concurrent Jobs = 20
+    }
+
+    #---------------------------------------------------------------------
+    # Autorización de Directores
+    #---------------------------------------------------------------------
+    Director {
+      Name = bacula-dir
+      Password = "UUE0c1INvpM51w2MBJZE/n1GLjAiFfZPwNE0N22508QZ"
+    }
+    Director {
+      Name = bacula-mon
+      Password = "5p+emSGBrRv7sdsOJjlXxOjIDIzvivTLzY8ywWCjz02x"
+      Monitor = yes
+    }
+
+    #---------------------------------------------------------------------
+    # Definición del Autochanger (Almacén de Disco)
+    # Esto debe coincidir con el 'Device' en bacula-dir.conf
+    #---------------------------------------------------------------------
+    Autochanger {
+      Name = FileChgr1
+      # Lista los dispositivos que maneja este "cambiador"
+      Device = FileChgr1-Dev1, FileChgr1-Dev2
+      Changer Command = ""
+      Changer Device = /dev/null
+    }
+
+    #---------------------------------------------------------------------
+    # Definición de Dispositivos (los "volúmenes" físicos)
+    #---------------------------------------------------------------------
+    Device {
+      Name = FileChgr1-Dev1
+      Media Type = File1
+      Archive Device = /opt/bacula/archive
+      LabelMedia = yes
+      Random Access = Yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+      Maximum Network Buffer Size = 65536
+      Maximum Concurrent Jobs = 5
+    }
+
+    Device {
+      Name = FileChgr1-Dev2
+      Media Type = File1
+      Archive Device = /opt/bacula/archive
+      LabelMedia = yes
+      Random Access = Yes
+      AutomaticMount = yes
+      RemovableMedia = no
+      AlwaysOpen = no
+      Maximum Network Buffer Size = 65536
+      Maximum Concurrent Jobs = 5
+    }
+
+    #---------------------------------------------------------------------
+    # Mensajes
+    #---------------------------------------------------------------------
+    Messages {
+      Name = Standard
+      director = bacula-dir = all
+    }
+
+---
+#-----------------------------------------------------------
+# PersistentVolumeClaim para Bacula-sd
+#-----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bacula-sd-nfs-data
+  namespace: bacula
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Ti
+  storageClassName: nfs-client
+
+---
+#-----------------------------------------------------------
+# Bacula-sd (Aplicación Principal)
+#-----------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bacula-sd-nfs
+  name: bacula-sd-nfs
+  namespace: bacula
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bacula-sd-nfs
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: bacula-sd-nfs
+    spec:
+      containers:
+      - image: docker.io/eftechcombr/bacula:15.0.2-storage
+        name: bacula-sd
+        ports:
+        - containerPort: 9103
+        env:
+        - name: TZ
+          value: "America/Lima"
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: bacula-sd-nfs
+          mountPath: "/opt/bacula/etc"
+          readOnly: true
+        - name: bacula-storage
+          mountPath: /opt/bacula/archive
+          subPath: archive
+        - name: bacula-storage
+          mountPath: /opt/bacula/working
+          subPath: working
+      volumes:
+      - name: bacula-sd-nfs
+        configMap:
+          name: bacula-sd-nfs
+      - name: bacula-storage
+        persistentVolumeClaim:
+          claimName: bacula-sd-nfs-data
+
+---
+#-----------------------------------------------------------
+# Modo de publicacion de Bacula-sd
+#-----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: bacula-sd-nfs
+  name: bacula-sd-nfs
+  namespace: bacula
+spec:
+  type: LoadBalancer
+  selector:
+    app: bacula-sd-nfs
+  ports:
+  - port: 9103
+    protocol: TCP
+    targetPort: 9103
