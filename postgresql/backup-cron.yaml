@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: backup-programado
+  namespace: bacula
+spec:
+  schedule: "0 30 3 * * *"
+  immediate: false 
+  cluster:
+    name: postgresql-node

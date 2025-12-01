@@ -1,0 +1,36 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql-restaurado  # NOMBRE DEL NUEVO CLUSTER
+  namespace: test
+spec:
+  instances: 3
+  
+  # DEFINIMOS EL ALMACENAMIENTO (Igual que el original)
+  storage:
+    size: 1Gi # Ajusta al tamaño que necesites
+
+  # SECCIÓN DE BOOTSTRAP (La magia ocurre aquí)
+  bootstrap:
+    recovery:
+      # El nombre del cluster ORIGINAL (dueño del backup)
+      source: postgresql-node
+      # El nombre exacto del Backup que quieres usar
+      backup:
+        name: backup
+
+  # DEFINICIÓN DE CONEXIÓN AL BACKUP (Copia la config de tu cluster original)
+  externalClusters:
+    - name: postgresql-node # Debe coincidir con el 'source' de arriba
+      barmanObjectStore:
+        destinationPath: s3://postgresql/
+        endpointURL: http://minio-hl.minio-tenant.svc.cluster.local:9000
+        s3Credentials:
+          accessKeyId:
+            name: minio-creds
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: minio-creds
+            key: ACCESS_SECRET_KEY
+        wal:
+          compression: gzip

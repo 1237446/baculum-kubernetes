@@ -23,6 +23,25 @@ spec:
         - '--lc-collate=C'
         - '--lc-ctype=C'
 
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://postgresql/
+      endpointURL: http://minio-hl.minio-tenant.svc.cluster.local:9000
+      s3Credentials:
+        accessKeyId:
+          name: minio-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: minio-creds
+          key: ACCESS_SECRET_KEY
+      wal:
+        compression: gzip
+      data:
+        additionalCommandArgs:
+          - "--min-chunk-size=5MB"
+          - "--read-timeout=60"
+          - "-vv"
+
   resources:
     requests:
       memory: "8Gi"
@@ -43,6 +62,7 @@ spec:
 
   postgresql:
     parameters:
+      timezone: "America/Lima"
       max_connections: "100"
       superuser_reserved_connections: "3"
       shared_buffers: "2 GB"
