@@ -1,0 +1,191 @@
+#---------------------------------------------------------------------
+# Archivo de configuracion baculum-web
+#---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bacularis-web
+  namespace: bacula
+data:
+  baculum.users: |-
+    admin:YWG41BPzVAkN6
+
+  hosts.conf: |-
+    [Main]
+    auth_type = "basic"
+    login = "admin"
+    password = "admin"
+    client_id = ""
+    client_secret = ""
+    redirect_uri = ""
+    scope = ""
+    protocol = "http"
+    address = "bacula-dir"
+    port = "9097"
+    url_prefix = ""
+
+  settings.conf: |-
+    [baculum]
+    debug = "0"
+    lang = "en"
+    max_jobs = "15000"
+    size_values_unit = "decimal"
+    time_in_job_log = "0"
+    date_time_format = "Y-M-D R"
+    enable_messages_log = "1"
+    enable_audit_log = "1"
+    audit_log_max_lines = "10000"
+    audit_log_types[] = "INFO"
+    audit_log_types[] = "WARNING"
+    audit_log_types[] = "ERROR"
+    audit_log_categories[] = "Application"
+    audit_log_categories[] = "Security"
+
+    [auth_basic]
+    allow_manage_users = "1"
+    user_file = "/var/www/bacularis/protected/Web/Config/bacularis.users"
+    hash_alg = "apr-md5"
+
+    [security]
+    auth_method = "local"
+    def_access = "default_settings"
+    def_role = "normal"
+    def_api_host = "bacula-dir" 
+
+  users.conf: |-
+    [admin]
+    long_name = "Bacularis admin"
+    email = "bacularis@local"
+    description = "Bacularis administrator"
+    roles = "normal,admin"
+    api_hosts[] = "Main"
+    ips = ""
+    enabled = "1"
+    username = "admin"
+
+  bacularis.users: |-
+    admin:$apr1$6hYFTlhE$0vj91PWcNlEjodBYuCEr9/
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bacularis-web-config
+  namespace: bacula
+spec:
+  storageClassName: ceph-filesystem
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 512Mi
+
+---
+#-----------------------------------------------------------
+# Baculum (Aplicación Principal)
+#-----------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bacularis-web
+  name: bacularis-web
+  namespace: bacula
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bacularis-web
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: bacularis-web
+    spec:
+      initContainers:
+        - name: init-config
+          image: busybox:latest
+          command: 
+            - 'sh'
+            - '-c'
+            - |
+              if [ ! -f /config-dst/users.conf ]; then
+                echo "Copiando configuracion inicial..."
+                cp /config-src/* /config-dst/
+              fi
+              echo "Aplicando permisos..."
+              chmod -R 777 /config-dst
+          volumeMounts:
+            # Montamos origen en /config-src
+            - name: config-vol
+              mountPath: "/config-src/hosts.conf"
+              subPath: hosts.conf
+            - name: config-vol
+              mountPath: "/config-src/settings.conf"
+              subPath: settings.conf
+            - name: config-vol
+              mountPath: "/config-src/users.conf"
+              subPath: users.conf
+            - name: config-vol
+              mountPath: "/config-src/bacularis.users"
+              subPath: bacularis.users
+            # Montamos destino (PVC) en /config-dst
+            - name: bacularis-web-config
+              mountPath: /config-dst
+      containers:
+      - image: bacularis/bacularis-web:5.8.0-alpine
+        name: bacularis-web
+        ports:
+        - containerPort: 9097
+        env:
+        - name: TZ
+          value: "America/Lima"
+        - name: PHP_DATE_TIMEZONE
+          value: "America/Lima"
+        volumeMounts:
+        - name: bacularis-web-config
+          mountPath: "/var/www/bacularis/protected/vendor/bacularis/bacularis-web/Web/Config"
+        - name: logs
+          mountPath: "/var/www/bacularis/protected/vendor/bacularis/bacularis-web/Web/Logs"
+        - name: working
+          mountPath: "/var/www/bacularis/protected/vendor/bacularis/bacularis-common/Common/Working"
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi" 
+      volumes:
+      - name: config-vol
+        configMap:
+          name: bacularis-web     
+      - name: bacularis-web-config
+        persistentVolumeClaim:
+          claimName: bacularis-web-config
+      - name: logs
+        emptyDir: {}
+      - name: working
+        emptyDir: {}
+
+---
+#-----------------------------------------------------------
+# Modo de publicacion de Baculum
+#-----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: bacularis-web
+  name: bacularis-web
+  namespace: bacula
+spec:
+  type: LoadBalancer
+  selector:
+    app: bacularis-web
+  ports:
+  - port: 9097
+    protocol: TCP
+    targetPort: 9097
